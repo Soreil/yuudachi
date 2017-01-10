@@ -22,7 +22,6 @@ import (
 
 // Variables used for command line parameters
 var (
-	Token         string
 	BotID         string
 	Botname       string
 	twitterClient *twitter.Client
@@ -38,11 +37,12 @@ func main() {
 	consumerSecret := flags.String("consumer-secret", "", "Twitter Consumer Secret")
 	accessToken := flags.String("access-token", "", "Twitter Access Token")
 	accessSecret := flags.String("access-secret", "", "Twitter Access Secret")
-	Token := flags.String("discord-token", "", "Discord Bot Token")
+	discordToken := flags.String("token", "", "Discord Bot Token")
 	flags.Parse(os.Args[1:])
 	flagutil.SetFlagsFromEnv(flags, "TWITTER")
+	flagutil.SetFlagsFromEnv(flags, "DISCORD")
 
-	if *consumerKey == "" || *consumerSecret == "" || *accessToken == "" || *accessSecret == "" {
+	if *consumerKey == "" || *consumerSecret == "" || *accessToken == "" || *accessSecret == "" || *discordToken == "" {
 		log.Fatal("Consumer key/secret and Access token/secret required")
 	}
 	config := oauth1.NewConfig(*consumerKey, *consumerSecret)
@@ -54,7 +54,7 @@ func main() {
 	twitterClient = twitter.NewClient(httpClient)
 
 	// Create a new Discord session using the provided bot token.
-	dg, err := discordgo.New("Bot " + *Token)
+	dg, err := discordgo.New("Bot " + *discordToken)
 	if err != nil {
 		log.Fatalln("error creating Discord session,", err)
 	}
