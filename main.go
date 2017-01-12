@@ -25,6 +25,7 @@ var (
 	BotID         string
 	Botname       string
 	twitterClient *twitter.Client
+	httpClient    *http.Client
 )
 
 func init() {
@@ -48,7 +49,7 @@ func main() {
 	config := oauth1.NewConfig(*consumerKey, *consumerSecret)
 	token := oauth1.NewToken(*accessToken, *accessSecret)
 	// OAuth1 http.Client will automatically authorize Requests
-	httpClient := config.Client(oauth1.NoContext, token)
+	httpClient = config.Client(oauth1.NoContext, token)
 
 	// Twitter client
 	twitterClient = twitter.NewClient(httpClient)
@@ -104,9 +105,16 @@ func exclaim(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 		switch tokens[0] {
-		case "tweet", "twitter":
-			//Reuses the whole message
-			tweet(s, m)
+		case "twitter":
+			if len(tokens) > 1 {
+				switch tokens[1] {
+				case "tweet", "search", "random":
+					//Reuses the whole message
+					randomTweet(s, m, strings.Join(tokens[2:], " "))
+				case "trends", "trend", "trending":
+					trending(s, m)
+				}
+			}
 		case "fortune":
 			if len(tokens) > 1 {
 				//Only want one word since that's all the API can take.
@@ -475,16 +483,57 @@ func fortune(s *discordgo.Session, m *discordgo.MessageCreate, category string) 
 	}
 }
 
-func tweet(s *discordgo.Session, m *discordgo.MessageCreate) {
-	search, _, err := twitterClient.Search.Tweets(&twitter.SearchTweetParams{Query: m.Content, ResultType: "mixed"})
+func randomTweet(s *discordgo.Session, m *discordgo.MessageCreate, query string) {
+	search, _, err := twitterClient.Search.Tweets(&twitter.SearchTweetParams{Query: query, ResultType: "mixed"})
 	if err != nil {
 		log.Println(err)
 	}
 	if len(search.Statuses) != 0 {
 		s.ChannelMessageSend(m.ChannelID, "https://twitter.com/statuses/"+search.Statuses[rand.Intn(len(search.Statuses)-1)].IDStr)
 	} else {
-		s.ChannelMessageSend(m.ChannelID, "Sadly there were no results for: "+m.Content+" on twitter.")
+		s.ChannelMessageSend(m.ChannelID, "Sadly there were no results for: "+query+" on twitter.")
 	}
+}
+func trending(s *discordgo.Session, m *discordgo.MessageCreate) {
+	type Trend []struct {
+		Trends []struct {
+			Name            string      `json:"name"`
+			URL             string      `json:"url"`
+			PromotedContent interface{} `json:"promoted_content"`
+			Query           string      `json:"query"`
+			TweetVolume     int         `json:"tweet_volume"`
+		} `json:"trends"`
+		AsOf      time.Time `json:"as_of"`
+		CreatedAt time.Time `json:"created_at"`
+		Locations []struct {
+			Name  string `json:"name"`
+			Woeid int    `json:"woeid"`
+		} `json:"locations"`
+	}
+	resp, err := httpClient.Get(`https://api.twitter.com/1.1/trends/place.json?id=1`)
+	if err != nil {
+		log.Fatalln("Failed to get Twitter trending topics:", err)
+	}
+	// Callers should close resp.Body
+	// when done reading from it
+	// Defer the closing of the body
+	defer resp.Body.Close()
+
+	// Fill the record with the data from the JSON
+	var record Trend
+	// Use json.Decode for reading streams of JSON data
+	if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
+		log.Println(err)
+	}
+	var out []string
+	for _, trends := range record {
+		for _, trend := range trends.Trends {
+			if trend.TweetVolume != 0 {
+				out = append(out, fmt.Sprint("trend: ", trend.Name, " volume: ", trend.TweetVolume))
+			}
+		}
+	}
+	s.ChannelMessageSend(m.ChannelID, strings.Join(out, "\n"))
 }
 
 // This function will be called (due to AddHandler above) every time a new
