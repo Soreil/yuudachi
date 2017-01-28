@@ -432,7 +432,7 @@ func fortune(s *discordgo.Session, m *discordgo.MessageCreate, category string) 
 	type Fortune struct {
 		Fortune string `json:"fortune"`
 	}
-	url := fmt.Sprintf("http://www.yerkee.com/api/fortune")
+	url := "http://www.yerkee.com/api/fortune"
 	if category == "help" {
 		s.ChannelMessageSend(m.ChannelID, "Fortune usage:\n!fortune CATEGORY\nWhere category is one of: computers, cookie, definitions, miscellaneous, people, platitudes, politics, science, wisdom")
 		return
@@ -645,7 +645,7 @@ func radio(s *discordgo.Session, m *discordgo.MessageCreate, function string) {
 		function = "dj"
 	}
 	url := `https://r-a-d.io/api`
-	if function == "help" || function != "dj" {
+	if function == "help" {
 		s.ChannelMessageSend(m.ChannelID, "Usage: !radio dj")
 		return
 	}
