@@ -22,14 +22,14 @@ import (
 
 // Variables used for command line parameters
 var (
-	BotID         string
-	Botname       string
+	botID         string
+	botName       string
 	twitterClient *twitter.Client
 	httpClient    *http.Client
 	bibleToken    string
 )
 
-const useragent = "Yuudachi/0.1"
+const userAgent = "Yuudachi/0.1"
 const appVersion = "02-02-2017"
 
 func init() {
@@ -76,8 +76,8 @@ func main() {
 	log.Println("Got bot details")
 
 	// Store the account ID for later use.
-	BotID = u.ID
-	Botname = u.Username
+	botID = u.ID
+	botName = u.Username
 	// Register messageCreate as a callback for the messageCreate events.
 	dg.AddHandler(messageCreate)
 	// Register exclamation orchestrator as a callback for the sending events.
@@ -95,7 +95,7 @@ func main() {
 
 func exclaim(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
-	if m.Author.ID == BotID {
+	if m.Author.ID == botID {
 		return
 	}
 	//We don't like other bots either
@@ -528,7 +528,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		}
 	}
-	if strings.Contains(strings.ToLower(m.Content), "kill "+strings.ToLower(Botname)) {
+	if strings.Contains(strings.ToLower(m.Content), "kill "+strings.ToLower(botName)) {
 		s.ChannelMessageSend(m.ChannelID, "EVASIVE MANOUVRES")
 	}
 	if m.Author.Username == "Liru" {
@@ -536,7 +536,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	for _, user := range m.Mentions {
-		if user.ID == BotID {
+		if user.ID == botID {
 			s.ChannelMessageSend(m.ChannelID, "Thank you for the kind message, <@"+m.Author.ID+">")
 		}
 	}
@@ -702,7 +702,7 @@ func bibleBooks(s *discordgo.Session, m *discordgo.MessageCreate) {
 	req := &http.Request{Method: "GET",
 		URL: u,
 		Header: http.Header{
-			"User-Agent": {useragent},
+			"User-Agent": {userAgent},
 		},
 	}
 	//Use only the token
@@ -825,7 +825,7 @@ func bibleSearch(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 	req := &http.Request{Method: "GET",
 		URL: u,
 		Header: http.Header{
-			"User-Agent": {useragent},
+			"User-Agent": {userAgent},
 		},
 	}
 	//Use only the token
