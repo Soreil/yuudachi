@@ -29,6 +29,9 @@ var (
 	bibleToken    string
 )
 
+const useragent = "Yuudachi/0.1"
+const appVersion = "02-02-2017"
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
@@ -47,26 +50,30 @@ func main() {
 		log.Println(*consumerKey, *consumerSecret, *accessToken, *accessSecret, *discordToken, *bibleToken2)
 		log.Fatal("Consumer key/secret and Access token/secret required")
 	}
+	log.Println("Keys gotten")
 	bibleToken = *bibleToken2
 	config := oauth1.NewConfig(*consumerKey, *consumerSecret)
 	token := oauth1.NewToken(*accessToken, *accessSecret)
+	log.Println("Twitter tokens done")
 	// OAuth1 http.Client will automatically authorize Requests
 	httpClient = config.Client(oauth1.NoContext, token)
 
 	// Twitter client
 	twitterClient = twitter.NewClient(httpClient)
-
+	log.Println("Twitter set up")
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + *discordToken)
 	if err != nil {
 		log.Fatalln("error creating Discord session,", err)
 	}
+	log.Println("Discord session created")
 
 	// Get the account information.
 	u, err := dg.User("@me")
 	if err != nil {
 		log.Fatalln("error obtaining account details,", err)
 	}
+	log.Println("Got bot details")
 
 	// Store the account ID for later use.
 	BotID = u.ID
@@ -75,13 +82,13 @@ func main() {
 	dg.AddHandler(messageCreate)
 	// Register exclamation orchestrator as a callback for the sending events.
 	dg.AddHandler(exclaim)
-
+	log.Println("Handlers added")
 	// Open the websocket and begin listening.
 	err = dg.Open()
 	if err != nil {
 		log.Fatalln("error opening connection,", err)
 	}
-
+	log.Println("Discord opened")
 	fmt.Println("Succesfully initialized")
 	<-make(chan struct{})
 }
@@ -105,7 +112,7 @@ func exclaim(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if tokens == nil {
 			return
 		}
-		switch tokens[0] {
+		switch strings.ToLower(tokens[0]) {
 		case "twitter":
 			if len(tokens) > 1 {
 				switch tokens[1] {
@@ -116,6 +123,8 @@ func exclaim(s *discordgo.Session, m *discordgo.MessageCreate) {
 					trending(s, m)
 				}
 			}
+		case "version":
+			version(s, m)
 		case "fortune":
 			if len(tokens) > 1 {
 				//Only want one word since that's all the API can take.
@@ -137,6 +146,10 @@ func exclaim(s *discordgo.Session, m *discordgo.MessageCreate) {
 			} else {
 				s.ChannelMessageSend(m.ChannelID, "Provide a board please!")
 			}
+		case "bible":
+			if len(tokens) > 1 {
+				bibleSearch(s, m, strings.Join(tokens[1:], " "))
+			}
 		case "radio", `r/a/dio`, `r-a-dio`, `r-a-d.io`:
 			if len(tokens) > 1 {
 				//Only want one word since that's all the API can take.
@@ -156,6 +169,12 @@ func exclaim(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 }
+
+func version(s *discordgo.Session, m *discordgo.MessageCreate) {
+	log.Println("Current version: " + appVersion)
+	s.ChannelMessageSend(m.ChannelID, "Current version: "+appVersion)
+}
+
 func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 	type Catalog []struct {
 		Page    int `json:"page"`
@@ -219,23 +238,7 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 		return
 	}
 	u += board + "/catalog.json"
-	// Build the request
-	req, err := http.NewRequest("GET", u, nil)
-	if err != nil {
-		log.Fatal("NewRequest: ", err)
-		return
-	}
-
-	// For control over HTTP client headers,
-	// redirect policy, and other settings,
-	// create a Client
-	// A Client is an HTTP client
-	client := &http.Client{}
-
-	// Send the request via a client
-	// Do sends an HTTP request and
-	// returns an HTTP response
-	resp, err := client.Do(req)
+	resp, err := http.Get(u)
 	if err != nil {
 		log.Fatal("Do: ", err)
 		return
@@ -326,23 +329,7 @@ func eightchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 		return
 	}
 	u += board + "/catalog.json"
-	// Build the request
-	req, err := http.NewRequest("GET", u, nil)
-	if err != nil {
-		log.Fatal("NewRequest: ", err)
-		return
-	}
-
-	// For control over HTTP client headers,
-	// redirect policy, and other settings,
-	// create a Client
-	// A Client is an HTTP client
-	client := &http.Client{}
-
-	// Send the request via a client
-	// Do sends an HTTP request and
-	// returns an HTTP response
-	resp, err := client.Do(req)
+	resp, err := http.Get(u)
 	if err != nil {
 		log.Fatal("Do: ", err)
 		return
@@ -392,22 +379,7 @@ func eightchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 	thread.Com = unembedURL(thread.Com)
 
 	img := fmt.Sprintf("https://media.8ch.net/file_store/%s%s", thread.Tim, thread.Ext)
-	req, err = http.NewRequest("GET", img, nil)
-	if err != nil {
-		log.Fatal("NewRequest: ", err)
-		return
-	}
-
-	// For control over HTTP client headers,
-	// redirect policy, and other settings,
-	// create a Client
-	// A Client is an HTTP client
-	client = &http.Client{}
-
-	// Send the request via a client
-	// Do sends an HTTP request and
-	// returns an HTTP response
-	exist, err := client.Do(req)
+	exist, err := http.Get(img)
 	if err != nil {
 		log.Fatal("Do: ", err)
 		return
@@ -454,23 +426,7 @@ func fortune(s *discordgo.Session, m *discordgo.MessageCreate, category string) 
 		s.ChannelMessageSend(m.ChannelID, "Unknown category, type \"!fortune help\" for a list of categories allowed.")
 		return
 	}
-	// Build the request
-	req, err := http.NewRequest("GET", u, nil)
-	if err != nil {
-		log.Fatal("NewRequest: ", err)
-		return
-	}
-
-	// For control over HTTP client headers,
-	// redirect policy, and other settings,
-	// create a Client
-	// A Client is an HTTP client
-	client := &http.Client{}
-
-	// Send the request via a client
-	// Do sends an HTTP request and
-	// returns an HTTP response
-	resp, err := client.Do(req)
+	resp, err := http.Get(u)
 	if err != nil {
 		log.Fatal("Do: ", err)
 		return
@@ -546,8 +502,7 @@ func trending(s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSend(m.ChannelID, strings.Join(out, "\n"))
 }
 
-// This function will be called (due to AddHandler above) every time a new
-// message is created on any channel that the autenticated bot has access to.
+//Not exclamationmark general text parsing and fun replies.
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	if m.Author.Bot || m.Author.Username == "Liru" {
@@ -555,22 +510,24 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	// If the message is "poi" reply with "Poi!"
-	if strings.Contains(strings.ToLower(m.Content), "poi") {
-		_, err := s.ChannelMessageSendTTS(m.ChannelID, "Poi!")
-		if err != nil {
-			log.Println(err)
-		}
-		ch, _ := s.Channel(m.ChannelID)
-		gu, _ := s.Guild(ch.GuildID)
-		for _, emoji := range gu.Emojis {
-			if strings.Contains(strings.ToLower(emoji.Name), "poi") {
-				if err := s.MessageReactionAdd(m.ChannelID, m.ID, emoji.APIName()); err != nil {
-					log.Println(err)
+	pois := strings.Fields(strings.ToLower(m.Content))
+	for _, word := range pois {
+		if word == "poi" {
+			_, err := s.ChannelMessageSendTTS(m.ChannelID, "Poi!")
+			if err != nil {
+				log.Println(err)
+			}
+			ch, _ := s.Channel(m.ChannelID)
+			gu, _ := s.Guild(ch.GuildID)
+			for _, emoji := range gu.Emojis {
+				if strings.Contains(strings.ToLower(emoji.Name), "poi") {
+					if err := s.MessageReactionAdd(m.ChannelID, m.ID, emoji.APIName()); err != nil {
+						log.Println(err)
+					}
 				}
 			}
 		}
 	}
-
 	if strings.Contains(strings.ToLower(m.Content), "kill "+strings.ToLower(Botname)) {
 		s.ChannelMessageSend(m.ChannelID, "EVASIVE MANOUVRES")
 	}
@@ -627,32 +584,28 @@ func radio(s *discordgo.Session, m *discordgo.MessageCreate, function string) {
 			} `json:"lp"`
 		} `json:"main"`
 	}
+
+	const u = `https://r-a-d.io/api`
+
 	// Ignore all messages created by the bot itself
 	if m.Author.Bot || m.Author.Username == "Liru" {
 		return
 	}
+
 	if function == "" {
 		function = "dj"
 	}
-	u := `https://r-a-d.io/api`
+
 	if function == "help" {
 		s.ChannelMessageSend(m.ChannelID, "Usage: !radio dj")
 		return
 	}
-	// Build the request
-	req, err := http.NewRequest("GET", u, nil)
+	resp, err := http.Get(u)
 	if err != nil {
-		log.Fatal("NewRequest: ", err)
+		log.Fatal("Get: ", err)
 		return
 	}
 
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal("Do: ", err)
-		return
-	}
 	if resp.StatusCode != http.StatusOK {
 		log.Println("Error: " + http.StatusText(resp.StatusCode))
 		return
@@ -682,60 +635,65 @@ func radio(s *discordgo.Session, m *discordgo.MessageCreate, function string) {
 		log.Println("Failed to fetch: " + http.StatusText(imgresp.StatusCode))
 		return
 	}
+
+	log.Println("Image size:", imgresp.ContentLength)
+	log.Println("Image status:", imgresp.Status)
+
 	defer imgresp.Body.Close()
-	//parts = append(parts, "https://r-a-d.io/api/dj-image/"+record.Main.Dj.Djimage)
+	parts = append(parts, "https://r-a-d.io/api/dj-image/"+record.Main.Dj.Djimage)
 
 	s.ChannelMessageSend(m.ChannelID, strings.Join(parts, "\n"))
-	s.ChannelFileSend(m.ChannelID, "lmao", resp.Body)
+	s.ChannelFileSend(m.ChannelID, record.Main.Dj.Djimage, resp.Body)
+}
+
+const bibleVersion = `eng-KJV`
+const bibleURL = `https://bibles.org/v2`
+
+type BibleBooks struct {
+	Response struct {
+		Books []struct {
+			VersionID   string `json:"version_id"`
+			Name        string `json:"name"`
+			Abbr        string `json:"abbr"`
+			Ord         string `json:"ord"`
+			BookGroupID string `json:"book_group_id"`
+			Testament   string `json:"testament"`
+			ID          string `json:"id"`
+			OsisEnd     string `json:"osis_end"`
+			Parent      struct {
+				Version struct {
+					Path string `json:"path"`
+					Name string `json:"name"`
+					ID   string `json:"id"`
+				} `json:"version"`
+			} `json:"parent"`
+			Next struct {
+				Book struct {
+					Path string `json:"path"`
+					Name string `json:"name"`
+					ID   string `json:"id"`
+				} `json:"book"`
+			} `json:"next,omitempty"`
+			Copyright string `json:"copyright"`
+			Previous  struct {
+				Book struct {
+					Path string `json:"path"`
+					Name string `json:"name"`
+					ID   string `json:"id"`
+				} `json:"book"`
+			} `json:"previous,omitempty"`
+		} `json:"books"`
+		Meta struct {
+			Fums          string `json:"fums"`
+			FumsTid       string `json:"fums_tid"`
+			FumsJsInclude string `json:"fums_js_include"`
+			FumsJs        string `json:"fums_js"`
+			FumsNoscript  string `json:"fums_noscript"`
+		} `json:"meta"`
+	} `json:"response"`
 }
 
 func bibleBooks(s *discordgo.Session, m *discordgo.MessageCreate) {
-	type BibleBooks struct {
-		Response struct {
-			Books []struct {
-				VersionID   string `json:"version_id"`
-				Name        string `json:"name"`
-				Abbr        string `json:"abbr"`
-				Ord         string `json:"ord"`
-				BookGroupID string `json:"book_group_id"`
-				Testament   string `json:"testament"`
-				ID          string `json:"id"`
-				OsisEnd     string `json:"osis_end"`
-				Parent      struct {
-					Version struct {
-						Path string `json:"path"`
-						Name string `json:"name"`
-						ID   string `json:"id"`
-					} `json:"version"`
-				} `json:"parent"`
-				Next struct {
-					Book struct {
-						Path string `json:"path"`
-						Name string `json:"name"`
-						ID   string `json:"id"`
-					} `json:"book"`
-				} `json:"next,omitempty"`
-				Copyright string `json:"copyright"`
-				Previous  struct {
-					Book struct {
-						Path string `json:"path"`
-						Name string `json:"name"`
-						ID   string `json:"id"`
-					} `json:"book"`
-				} `json:"previous,omitempty"`
-			} `json:"books"`
-			Meta struct {
-				Fums          string `json:"fums"`
-				FumsTid       string `json:"fums_tid"`
-				FumsJsInclude string `json:"fums_js_include"`
-				FumsJs        string `json:"fums_js"`
-				FumsNoscript  string `json:"fums_noscript"`
-			} `json:"meta"`
-		} `json:"response"`
-	}
-
-	bibleVersion := `eng-KJV`
-	const bibleURL = `https://bibles.org/v2`
 	u, err := url.Parse(bibleURL)
 	if err != nil {
 		panic(err)
@@ -744,7 +702,7 @@ func bibleBooks(s *discordgo.Session, m *discordgo.MessageCreate) {
 	req := &http.Request{Method: "GET",
 		URL: u,
 		Header: http.Header{
-			"User-Agent": {"Yuudachi/0.1"},
+			"User-Agent": {useragent},
 		},
 	}
 	//Use only the token
@@ -753,6 +711,7 @@ func bibleBooks(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if err != nil {
 		panic(err)
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		log.Println("Error:", http.StatusText(resp.StatusCode))
 	}
@@ -768,16 +727,191 @@ func bibleBooks(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	var msg []string
-	var booklist []string
+	var bookList []string
 	for _, book := range books.Response.Books {
-		booklist = append(booklist, book.Name)
+		bookList = append(bookList, book.Name)
 	}
-	msg = append(msg, strings.Join(booklist, ", "))
+	msg = append(msg, strings.Join(bookList, ", "))
 	//Copyright message assumed to be the same for all books
-	copyright := books.Response.Books[0].Copyright
-	copyright = strings.Replace(copyright, `<p>`, "*", -1)
-	copyright = strings.Replace(copyright, `</p>`, "*", -1)
-	msg = append(msg, copyright)
+	//copyright := books.Response.Books[0].Copyright
+	//copyright = strings.Replace(copyright, `<p>`, "*", -1)
+	//copyright = strings.Replace(copyright, `</p>`, "*", -1)
+	//msg = append(msg, copyright)
 
 	s.ChannelMessageSend(m.ChannelID, strings.Join(msg, "\n"))
+}
+
+type BibleSearch struct {
+	Response struct {
+		Search struct {
+			Result struct {
+				Type    string `json:"type"`
+				Summary struct {
+					Query      string   `json:"query"`
+					Start      int      `json:"start"`
+					Total      int      `json:"total"`
+					Rpp        string   `json:"rpp"`
+					Sort       string   `json:"sort"`
+					Versions   []string `json:"versions"`
+					Testaments []string `json:"testaments"`
+				} `json:"summary"`
+				Passages []struct {
+					Display             string `json:"display"`
+					Version             string `json:"version"`
+					VersionAbbreviation string `json:"version_abbreviation"`
+					Path                string `json:"path"`
+					StartVerseID        string `json:"start_verse_id"`
+					EndVerseID          string `json:"end_verse_id"`
+					Text                string `json:"text"`
+					Copyright           string `json:"copyright"`
+				} `json:"passages"`
+				Verses []struct {
+					Auditid    string `json:"auditid"`
+					Verse      string `json:"verse"`
+					Lastverse  string `json:"lastverse"`
+					ID         string `json:"id"`
+					OsisEnd    string `json:"osis_end"`
+					Label      string `json:"label"`
+					Reference  string `json:"reference"`
+					PrevOsisID string `json:"prev_osis_id"`
+					NextOsisID string `json:"next_osis_id"`
+					Text       string `json:"text"`
+					Parent     struct {
+						Chapter struct {
+							Path string `json:"path"`
+							Name string `json:"name"`
+							ID   string `json:"id"`
+						} `json:"chapter"`
+					} `json:"parent"`
+					Next struct {
+						Verse struct {
+							Path string `json:"path"`
+							Name string `json:"name"`
+							ID   string `json:"id"`
+						} `json:"verse"`
+					} `json:"next"`
+					Previous struct {
+						Verse struct {
+							Path string `json:"path"`
+							Name string `json:"name"`
+							ID   string `json:"id"`
+						} `json:"verse"`
+					} `json:"previous"`
+					Copyright string `json:"copyright"`
+				} `json:"verses"`
+			} `json:"result"`
+		} `json:"search"`
+		Meta struct {
+			Fums          string `json:"fums"`
+			FumsTid       string `json:"fums_tid"`
+			FumsJsInclude string `json:"fums_js_include"`
+			FumsJs        string `json:"fums_js"`
+			FumsNoscript  string `json:"fums_noscript"`
+		} `json:"meta"`
+	} `json:"response"`
+}
+
+func bibleSearch(s *discordgo.Session, m *discordgo.MessageCreate, query string) {
+	u, err := url.Parse(bibleURL)
+	if err != nil {
+		panic(err)
+	}
+	u.Path += "/search.js"
+	q := u.Query()
+	q.Set("query", query)
+	q.Set("version", bibleVersion)
+	u.RawQuery = q.Encode()
+
+	req := &http.Request{Method: "GET",
+		URL: u,
+		Header: http.Header{
+			"User-Agent": {useragent},
+		},
+	}
+	//Use only the token
+	req.SetBasicAuth(bibleToken, "")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Println("Error:", http.StatusText(resp.StatusCode))
+		return
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		s.ChannelMessageSend(m.ChannelID, query+":"+http.StatusText(http.StatusNotFound))
+		log.Println(req.URL)
+		return
+	}
+	var result BibleSearch
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		//Invalid JSON
+		log.Println(err)
+		return
+	}
+	//s.ChannelMessageSend(m.ChannelID,result.Response.Search.Result.Summary.Query)
+	if result.Response.Search.Result.Type == "passages" {
+		log.Println(result.Response.Search.Result)
+		if result.Response.Search.Result.Passages == nil || len(result.Response.Search.Result.Passages) <= 0 {
+			s.ChannelMessageSend(m.ChannelID, query+":"+http.StatusText(http.StatusNotFound))
+			return
+		}
+		verse := result.Response.Search.Result.Passages[rand.Intn(len(result.Response.Search.Result.Passages))].Text
+		verse = html2markup(verse)
+		//DAS RITE
+		if strings.Contains(strings.ToLower(query), `lord`) {
+			if strings.ToLower(query) == `lord` {
+				verse = strings.Replace(verse, `LORD`, "__**LORD**__", -1)
+			} else {
+				verse = strings.Replace(verse, `LORD`, "* __***LORD***__ *", -1)
+			}
+		} else {
+			verse = strings.Replace(verse, `LORD`, "__***LORD***__", -1)
+		}
+
+		lines := strings.Split(verse, "\n")
+		for _, line := range lines {
+			_, err = s.ChannelMessageSend(m.ChannelID, line)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+		log.Println(req.URL)
+	}
+	if result.Response.Search.Result.Type == "verses" {
+		log.Println(result.Response.Search.Result)
+		if result.Response.Search.Result.Verses == nil || len(result.Response.Search.Result.Verses) <= 0 {
+			s.ChannelMessageSend(m.ChannelID, query+":"+http.StatusText(http.StatusNotFound))
+			return
+		}
+		verse := result.Response.Search.Result.Verses[rand.Intn(len(result.Response.Search.Result.Verses))].Text
+		verse = html2markup(verse)
+		//DAS RITE
+		if strings.Contains(strings.ToLower(query), `lord`) {
+			if strings.ToLower(query) == `lord` {
+				verse = strings.Replace(verse, `LORD`, "__**LORD**__", -1)
+			} else {
+				verse = strings.Replace(verse, `LORD`, "* __***LORD***__ *", -1)
+			}
+		} else {
+			verse = strings.Replace(verse, `LORD`, "__***LORD***__", -1)
+		}
+
+		_, err = s.ChannelMessageSend(m.ChannelID, verse)
+		if err != nil {
+			log.Println(err)
+		}
+		log.Println(req.URL)
+	}
+}
+
+func html2markup(text string) string {
+	text = strings.Replace(text, `<em>`, "*", -1)
+	text = strings.Replace(text, `</em>`, "*", -1)
+	text = strings.Replace(text, `<sup>`, "**", -1)
+	text = strings.Replace(text, `</sup> `, "** ", -1)
+	text = strings.Replace(text, `</sup>`, "** ", -1)
+	return text
 }
