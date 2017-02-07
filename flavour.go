@@ -10,7 +10,7 @@ import (
 func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	if m.Author.Bot || m.Author.Username == "Liru" {
-		if m.Author.Username == "Liru" && strings.Contains(m.Content, "awooo") {
+		if m.Author.Username == "Liru" && strings.Contains(strings.ToLower(m.Content), "awooo") {
 			s.ChannelMessageSend(m.ChannelID, "No shouting Liru!")
 		}
 		return

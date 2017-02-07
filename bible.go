@@ -80,6 +80,8 @@ func bibleBooks(s *discordgo.Session, m *discordgo.MessageCreate) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		log.Println("Error:", http.StatusText(resp.StatusCode))
+		s.ChannelMessageSend(m.ChannelID, "Sorry, we could not fetch the bible books at this moment.")
+		return
 	}
 	var books BibleBooks
 	if err := json.NewDecoder(resp.Body).Decode(&books); err != nil {
@@ -204,17 +206,19 @@ func bibleSearch(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 
 	if resp.StatusCode != http.StatusOK {
 		log.Println("Error:", http.StatusText(resp.StatusCode))
+		s.ChannelMessageSend(m.ChannelID, "Sorry, we could not fetch the bible books at this moment.")
 		return
 	}
 	if resp.StatusCode == http.StatusNotFound {
 		s.ChannelMessageSend(m.ChannelID, query+":"+http.StatusText(http.StatusNotFound))
 		log.Println(req.URL)
+		s.ChannelMessageSend(m.ChannelID, "Sorry, we could not fetch the bible books at this moment.")
 		return
 	}
 	var result BibleSearch
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		//Invalid JSON
-		log.Println(err)
+		panic(err)
 		return
 	}
 	//s.ChannelMessageSend(m.ChannelID,result.Response.Search.Result.Summary.Query)
