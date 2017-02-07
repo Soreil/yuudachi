@@ -98,15 +98,9 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 		log.Println("Error: " + http.StatusText(resp.StatusCode))
 		return
 	}
-	// Callers should close resp.Body
-	// when done reading from it
-	// Defer the closing of the body
 	defer resp.Body.Close()
 
-	// Fill the record with the data from the JSON
 	var record Catalog
-
-	// Use json.Decode for reading streams of JSON data
 	if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
 		log.Println(err)
 	}

@@ -152,6 +152,10 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			} else {
 				s.ChannelMessageSend(m.ChannelID, "Provide a board please!")
 			}
+		case "birb", "bird", "birds":
+			birds(s, m)
+		default:
+			s.ChannelMessageSend("Unrecognized command: ", tokens[1])
 		}
 	}
 }

@@ -13,35 +13,33 @@ func fortune(s *discordgo.Session, m *discordgo.MessageCreate, category string) 
 	}
 	u := "http://www.yerkee.com/api/fortune"
 	if category == "help" {
-		s.ChannelMessageSend(m.ChannelID, "Fortune usage:\n!fortune CATEGORY\nWhere category is one of: computers, cookie, definitions, miscellaneous, people, platitudes, politics, science, wisdom")
+		s.ChannelMessageSend(m.ChannelID, "Fortune usage:\n!fortune CATEGORY\nWhere category is one of: computers, cookie, definitions, miscellaneous, people, platitudes, politics, science, wisdom\nIf no category is given a random one is chosen.")
 		return
 	}
-
-	if category == "computers" || category == "cookie" || category == "definitions" || category == "miscellaneous" || category == "people" || category == "platitudes" || category == "politics" || category == "science" || category == "wisdom" {
+	switch category {
+	case "computers", "cookie", "definitions", "miscellaneous", "people", "platitudes", "politics", "science", "wisdom":
 		u += "/" + category
-	} else if category != "" {
+	case "":
+	default:
 		s.ChannelMessageSend(m.ChannelID, "Unknown category, type \"!fortune help\" for a list of categories allowed.")
 		return
 	}
 	resp, err := http.Get(u)
 	if err != nil {
-		log.Fatal("Do: ", err)
+		log.Fatal("Failed to get resource: ", err)
 		return
 	}
-
-	// Callers should close resp.Body
-	// when done reading from it
-	// Defer the closing of the body
 	defer resp.Body.Close()
 
-	// Fill the record with the data from the JSON
 	var record Fortune
-
-	// Use json.Decode for reading streams of JSON data
 	if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
 		log.Println(err)
 	}
+
+	//Didn't get a fortune
 	if record.Fortune != "" {
 		s.ChannelMessageSend(m.ChannelID, record.Fortune)
+	} else {
+		log.Println("Failed to get a fortune.")
 	}
 }

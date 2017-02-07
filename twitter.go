@@ -19,6 +19,7 @@ func randomTweet(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 	search, _, err := twitterClient.Search.Tweets(&twitter.SearchTweetParams{Query: query, ResultType: "mixed"})
 	if err != nil {
 		log.Println(err)
+		return
 	}
 	if len(search.Statuses) != 0 {
 		s.ChannelMessageSend(m.ChannelID, "https://twitter.com/statuses/"+search.Statuses[rand.Intn(len(search.Statuses)-1)].IDStr)
@@ -44,19 +45,17 @@ func trending(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	resp, err := rawTwitterClient.Get(`https://api.twitter.com/1.1/trends/place.json?id=1`)
 	if err != nil {
-		log.Fatalln("Failed to get Twitter trending topics:", err)
+		log.Println("Failed to get Twitter trending topics:", err)
+		return
 	}
-	// Callers should close resp.Body
-	// when done reading from it
-	// Defer the closing of the body
 	defer resp.Body.Close()
 
-	// Fill the record with the data from the JSON
 	var record Trend
-	// Use json.Decode for reading streams of JSON data
 	if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
 		log.Println(err)
+		return
 	}
+
 	var out []string
 	for _, trends := range record {
 		for _, trend := range trends.Trends {

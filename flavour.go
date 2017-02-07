@@ -10,6 +10,9 @@ import (
 func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	if m.Author.Bot || m.Author.Username == "Liru" {
+		if m.Author.Username == "Liru" && strings.Contains(m.Content, "awooo") {
+			s.ChannelMessageSend(m.ChannelID, "No shouting Liru!")
+		}
 		return
 	}
 
@@ -32,11 +35,9 @@ func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		}
 	}
+
 	if strings.Contains(strings.ToLower(m.Content), "kill "+strings.ToLower(botName)) {
 		s.ChannelMessageSend(m.ChannelID, "EVASIVE MANOUVRES")
-	}
-	if m.Author.Username == "Liru" {
-		s.ChannelMessageSend(m.ChannelID, "No shouting Liru!")
 	}
 
 	for _, user := range m.Mentions {
