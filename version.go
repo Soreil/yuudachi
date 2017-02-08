@@ -3,14 +3,31 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"log"
+	"os/exec"
 	"strings"
 )
 
-const appVersion = "07-02-2017"
+const appVersion = `08-02-2017
+"BIG text edition"`
+
+func figlet(s string) (string, error) {
+	cmd := exec.Command("figlet", "-p", s)
+	fig, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(fig), nil
+}
 
 func version(s *discordgo.Session, m *discordgo.MessageCreate) {
-	log.Println("Current version: " + appVersion)
-	s.ChannelMessageSend(m.ChannelID, "Current version: "+appVersion)
+	msg := "Current version: " + appVersion
+	log.Println(msg)
+	fig, err := figlet(msg)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, msg)
+	} else {
+		s.ChannelMessageSend(m.ChannelID, "```"+fig+"```")
+	}
 }
 
 func usage(s *discordgo.Session, m *discordgo.MessageCreate) {

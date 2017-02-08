@@ -35,7 +35,14 @@ func main() {
 	accessSecret := flags.String("access-secret", "", "Twitter Access Secret")
 	discordToken := flags.String("token", "", "Discord Bot Token")
 	bibleToken2 := flags.String("bible", "", "Bible search token")
+	printVersion := flags.Bool("v", false, "Display current version")
 	flags.Parse(os.Args[1:])
+
+	//TODO(Sjon): Give this a proper place.
+	if *printVersion {
+		fmt.Println(appVersion)
+		os.Exit(0)
+	}
 
 	if *consumerKey == "" || *consumerSecret == "" || *accessToken == "" || *accessSecret == "" || *discordToken == "" || *bibleToken2 == "" {
 		log.Println(*consumerKey, *consumerSecret, *accessToken, *accessSecret, *discordToken, *bibleToken2)

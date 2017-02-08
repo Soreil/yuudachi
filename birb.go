@@ -8,9 +8,9 @@ import (
 )
 
 func birds(s *discordgo.Session, m *discordgo.MessageCreate) {
-	var msg = []string{":bird:", ":dove:", ":chicken:", ":baby_chick:" /*":bat:",*/, ":rooster:", ":penguin:", ":turkey:", ":eagle:", ":duck:", ":owl:"}
+	var birds = []string{":bird:", ":dove:", ":chicken:", ":baby_chick:", ":rooster:", ":penguin:", ":turkey:", ":eagle:", ":duck:", ":owl:"}
 
-	//We want to use server specific fun old style emoji
+	//We want to use server specific fun old style emoji.
 	ch, _ := s.Channel(m.ChannelID)
 	gu, _ := s.Guild(ch.GuildID)
 	for _, emoji := range gu.Emojis {
@@ -18,8 +18,8 @@ func birds(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if err := s.MessageReactionAdd(m.ChannelID, m.ID, emoji.APIName()); err != nil {
 				log.Println(err)
 			}
-			msg = append(msg, ":"+emoji.Name+":")
+			birds = append(birds, ":"+emoji.Name+":")
 		}
 	}
-	s.ChannelMessageSend(m.ChannelID, msg[rand.Intn(len(msg))])
+	s.ChannelMessageSend(m.ChannelID, birds[rand.Intn(len(birds))])
 }
