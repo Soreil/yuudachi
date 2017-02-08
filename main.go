@@ -12,6 +12,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
+	"strconv"
 )
 
 // Variables used for command line parameters
@@ -147,6 +148,11 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		case "8chan", "8ch":
 			if len(tokens) > 1 {
+				s.ChannelMessageSend(m.ChannelID, "I don't really like 8chan but maybe I'll let you look.")
+				if roll := rand.Intn(6) + 1; roll != 6 {
+					s.ChannelMessageSend(m.ChannelID, "You rolled a meagre: "+strconv.Itoa(roll)+"\nNo 8chan for you.")
+					return
+				}
 				//Only want one word since that's all the API can take.
 				eightchan(s, m, tokens[1])
 			} else {
@@ -155,7 +161,8 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "birb", "bird", "birds":
 			birds(s, m)
 		default:
-			s.ChannelMessageSend("Unrecognized command: ", tokens[1])
+			s.ChannelMessageSend(m.ChannelID, "Unrecognized command: "+tokens[0])
+			usage(s, m)
 		}
 	}
 }
