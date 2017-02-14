@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func radio(s *discordgo.Session, m *discordgo.MessageCreate, function string) {
@@ -86,28 +87,40 @@ func radio(s *discordgo.Session, m *discordgo.MessageCreate, function string) {
 		log.Println(err)
 	}
 	var parts []string
-	parts = append(parts, "Current DJ: "+record.Main.Dj.Djname)
-	parts = append(parts, "Current song: "+record.Main.Lp[0].Meta)
-	if record.Main.Thread != "" {
-		parts = append(parts, "There is a thread up: "+record.Main.Thread)
-
+	time.Duration(record.Main.Current - record.Main.StartTime).String()
+	parts = append(parts, "Present DJ: "+record.Main.Dj.Djname)
+	parts = append(parts, "Present song: "+record.Main.Lp[0].Meta)
+	parts = append(parts, "Present time: "+(time.Duration(record.Main.Current-record.Main.StartTime)*time.Second).String()+" / "+(time.Duration(record.Main.EndTime-record.Main.StartTime)*time.Second).String())
+	if record.Main.Thread != "" && record.Main.Thread != "none" {
+		parts = append(parts, "Present place: "+record.Main.Thread)
+	} else {
+		parts = append(parts, "There is no thread up at the moment.")
 	}
-	imgresp, err := http.Get("https://r-a-d.io/api/dj-image/" + record.Main.Dj.Djimage)
+	s.ChannelMessageSend(m.ChannelID, strings.Join(parts, "\n"))
+
+	imgresp, err := http.Get(u + "/dj-image/" + record.Main.Dj.Djimage)
+
 	if err != nil {
 		log.Println(err)
 		return
 	}
+	defer imgresp.Body.Close()
+
 	if imgresp.StatusCode != http.StatusOK {
 		log.Println("Failed to fetch: " + http.StatusText(imgresp.StatusCode))
 		return
 	}
 
-	log.Println("Image size:", imgresp.ContentLength)
-	log.Println("Image status:", imgresp.Status)
-
-	defer imgresp.Body.Close()
-	parts = append(parts, "https://r-a-d.io/api/dj-image/"+record.Main.Dj.Djimage)
-
-	s.ChannelMessageSend(m.ChannelID, strings.Join(parts, "\n"))
-	s.ChannelFileSend(m.ChannelID, record.Main.Dj.Djimage, resp.Body)
+	var format string
+	switch t := imgresp.Header.Get("Content-Type"); {
+	case strings.Contains(t, "png"):
+		format = "png"
+	case strings.Contains(t, "jpg"), strings.Contains(t, "jpeg"):
+		format = "jpeg"
+	case strings.Contains(t, "gif"):
+		format = "gif"
+	default:
+		format = "unknown"
+	}
+	s.ChannelFileSend(m.ChannelID, record.Main.Dj.Djimage+"."+format, imgresp.Body)
 }

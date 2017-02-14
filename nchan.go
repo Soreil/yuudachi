@@ -203,7 +203,7 @@ func eightchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 
 	page := record[rand.Intn(len(record)-1)]
 	thread := page.Threads[rand.Intn(len(page.Threads)-1)]
-	for !strings.Contains(strings.ToLower(thread.Sub), "general") {
+	for strings.Contains(strings.ToLower(thread.Sub), "general") {
 		page = record[rand.Intn(len(record)-1)]
 		thread = page.Threads[rand.Intn(len(page.Threads)-1)]
 	}

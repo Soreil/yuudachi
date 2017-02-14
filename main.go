@@ -29,12 +29,12 @@ func init() {
 
 func main() {
 	flags := flag.NewFlagSet("user-auth", flag.ExitOnError)
-	consumerKey := flags.String("consumer-key", "", "Twitter Consumer Key")
-	consumerSecret := flags.String("consumer-secret", "", "Twitter Consumer Secret")
-	accessToken := flags.String("access-token", "", "Twitter Access Token")
-	accessSecret := flags.String("access-secret", "", "Twitter Access Secret")
-	discordToken := flags.String("token", "", "Discord Bot Token")
-	bibleToken2 := flags.String("bible", "", "Bible search token")
+	twitterConsumerKey := flags.String("consumer-key", "", "Twitter Consumer Key")
+	twitterConsumerSecret := flags.String("consumer-secret", "", "Twitter Consumer Secret")
+	twitterAccessToken := flags.String("access-token", "", "Twitter Access Token")
+	twitterAccessSecret := flags.String("access-secret", "", "Twitter Access Secret")
+	discordBotToken := flags.String("token", "", "Discord Bot Token")
+	bibleAccessToken := flags.String("bible", "", "Bible search token")
 	printVersion := flags.Bool("v", false, "Display current version")
 	flags.Parse(os.Args[1:])
 
@@ -44,14 +44,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *consumerKey == "" || *consumerSecret == "" || *accessToken == "" || *accessSecret == "" || *discordToken == "" || *bibleToken2 == "" {
-		log.Println(*consumerKey, *consumerSecret, *accessToken, *accessSecret, *discordToken, *bibleToken2)
+	if *twitterConsumerKey == "" || *twitterConsumerSecret == "" || *twitterAccessToken == "" || *twitterAccessSecret == "" || *discordBotToken == "" || *bibleAccessToken == "" {
+		log.Println(*twitterConsumerKey, *twitterConsumerSecret, *twitterAccessToken, *twitterAccessSecret, *discordBotToken, *bibleAccessToken)
 		log.Fatal("Consumer key/secret and Access token/secret required")
 	}
 	log.Println("Keys gotten")
-	bibleToken = *bibleToken2
-	config := oauth1.NewConfig(*consumerKey, *consumerSecret)
-	token := oauth1.NewToken(*accessToken, *accessSecret)
+	bibleToken = *bibleAccessToken
+	config := oauth1.NewConfig(*twitterConsumerKey, *twitterConsumerSecret)
+	token := oauth1.NewToken(*twitterAccessToken, *twitterAccessSecret)
 	log.Println("Twitter tokens done")
 	// OAuth1 http.Client will automatically authorize Requests
 	rawTwitterClient = config.Client(oauth1.NoContext, token)
@@ -60,7 +60,7 @@ func main() {
 	twitterClient = twitter.NewClient(rawTwitterClient)
 	log.Println("Twitter set up")
 	// Create a new Discord session using the provided bot token.
-	dg, err := discordgo.New("Bot " + *discordToken)
+	dg, err := discordgo.New("Bot " + *discordBotToken)
 	if err != nil {
 		log.Fatalln("error creating Discord session,", err)
 	}
