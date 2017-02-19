@@ -131,7 +131,23 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 
 	img := fmt.Sprintf("https://i.4cdn.org/%s/%d%s", board, thread.Tim, thread.Ext)
 	link := fmt.Sprintf("<https://i.4cdn.org/%s/thread/%d>", board, thread.No)
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s%s\n%s\n\n%s", thread.Sub, thread.Com, img, link))
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s%s\n%s\n\n%s", thread.Sub, thread.Com, link))
+
+	imgresp, err := http.Get(img)
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer imgresp.Body.Close()
+
+	if imgresp.StatusCode != http.StatusOK {
+		log.Println("Failed to fetch: " + http.StatusText(imgresp.StatusCode))
+		return
+	}
+
+	s.ChannelFileSend(m.ChannelID, fmt.Sprintf("%d%s", thread.Tim, thread.Ext), imgresp.Body)
+
 }
 
 func eightchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
@@ -223,21 +239,34 @@ func eightchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 	}
 	thread.Com = unembedURL(thread.Com)
 
+	//There are two different filelocations I detected on 8ch and it's unclear which is used from context.
 	img := fmt.Sprintf("https://media.8ch.net/file_store/%s%s", thread.Tim, thread.Ext)
-	exist, err := http.Get(img)
+	imgresp, err := http.Get(img)
 	if err != nil {
-		log.Fatal("Do: ", err)
+		log.Println(err)
 		return
 	}
-	if err == nil && exist.StatusCode != http.StatusOK {
-		log.Println("Error: " + http.StatusText(exist.StatusCode))
+	if imgresp.StatusCode != http.StatusOK {
+		log.Println("Error: " + http.StatusText(imgresp.StatusCode))
+		imgresp.Body.Close()
+		//We'll check location two
 		img = fmt.Sprintf("https://media.8ch.net/%s/src/%s%s", board, thread.Tim, thread.Ext)
+		imgresp, err = http.Get(img)
 	}
-	// Callers should close resp.Body
-	// when done reading from it
-	// Defer the closing of the body
-	defer exist.Body.Close()
 
 	link := fmt.Sprintf("<https://8ch.net/%s/res/%d.html>", board, thread.No)
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s%s\n%s\n\n%s", thread.Sub, thread.Com, img, link))
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s%s\n%s\n\n%s", thread.Sub, thread.Com, link))
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer imgresp.Body.Close()
+
+	if imgresp.StatusCode != http.StatusOK {
+		log.Println("Failed to fetch: " + http.StatusText(imgresp.StatusCode))
+		return
+	}
+
+	s.ChannelFileSend(m.ChannelID, fmt.Sprintf("%d%s", thread.Tim, thread.Ext), imgresp.Body)
 }

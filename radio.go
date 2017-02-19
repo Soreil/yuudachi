@@ -89,7 +89,7 @@ func radio(s *discordgo.Session, m *discordgo.MessageCreate, function string) {
 	var parts []string
 	time.Duration(record.Main.Current - record.Main.StartTime).String()
 	parts = append(parts, "Present DJ: "+record.Main.Dj.Djname)
-	parts = append(parts, "Present song: "+record.Main.Lp[0].Meta)
+	parts = append(parts, "Present song: "+record.Main.Np)
 	parts = append(parts, "Present time: "+(time.Duration(record.Main.Current-record.Main.StartTime)*time.Second).String()+" / "+(time.Duration(record.Main.EndTime-record.Main.StartTime)*time.Second).String())
 	if record.Main.Thread != "" && record.Main.Thread != "none" {
 		parts = append(parts, "Present place: "+record.Main.Thread)

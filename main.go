@@ -73,8 +73,11 @@ func main() {
 
 	botID = u.ID
 	botName = u.Username
+
+	//here we add the functions
 	dg.AddHandler(personality)
 	dg.AddHandler(command)
+	dg.AddHandler(tatsumaki)
 	log.Println("Handlers added")
 	err = dg.Open()
 	if err != nil {
