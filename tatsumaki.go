@@ -11,8 +11,8 @@ func tatsumaki(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if strings.Contains(strings.ToLower(m.Content), "leveled") {
-		if err := s.MessageReactionAdd(m.ChannelID, m.ID, ":tada:"); err != nil {
-			log.Println(err)
+		if err := s.MessageReactionAdd(m.ChannelID, m.ID, "🎉"); err != nil {
+			log.Println("Failed to to add 🎉", err)
 		}
 	}
 }
