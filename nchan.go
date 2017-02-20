@@ -131,7 +131,7 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 
 	img := fmt.Sprintf("https://i.4cdn.org/%s/%d%s", board, thread.Tim, thread.Ext)
 	link := fmt.Sprintf("<https://i.4cdn.org/%s/thread/%d>", board, thread.No)
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s%s\n%s\n\n%s", thread.Sub, thread.Com, link))
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s\n%s\n\n%s", thread.Sub, thread.Com, link))
 
 	imgresp, err := http.Get(img)
 
@@ -146,7 +146,7 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 		return
 	}
 
-	s.ChannelFileSend(m.ChannelID, fmt.Sprintf("%d%s", thread.Tim, thread.Ext), imgresp.Body)
+	s.ChannelFileSend(m.ChannelID, thread.Filename+thread.Ext, imgresp.Body)
 
 }
 
@@ -199,15 +199,10 @@ func eightchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 		log.Println("Error: " + http.StatusText(resp.StatusCode))
 		return
 	}
-	// Callers should close resp.Body
-	// when done reading from it
-	// Defer the closing of the body
 	defer resp.Body.Close()
 
-	// Fill the record with the data from the JSON
 	var record Catalog
 
-	// Use json.Decode for reading streams of JSON data
 	if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
 		log.Println(err)
 		s, err := ioutil.ReadAll(resp.Body)
@@ -255,7 +250,7 @@ func eightchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 	}
 
 	link := fmt.Sprintf("<https://8ch.net/%s/res/%d.html>", board, thread.No)
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s%s\n%s\n\n%s", thread.Sub, thread.Com, link))
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s\n%s\n\n%s", thread.Sub, thread.Com, link))
 
 	if err != nil {
 		log.Println(err)
