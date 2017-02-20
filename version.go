@@ -8,7 +8,7 @@ import (
 )
 
 const appVersion = `19-02-2017
-"Talk with Tatsu!"`
+"8CH IS GONE!"`
 
 func figlet(s string) (string, error) {
 	cmd := exec.Command("figlet", "-p", s)
@@ -31,6 +31,6 @@ func version(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func usage(s *discordgo.Session, m *discordgo.MessageCreate) {
-	usage := strings.Join([]string{"twitter", "version", "fortune", "8chan", "4chan", "bible", "radio", "bird"}, ", ")
+	usage := strings.Join([]string{"twitter", "version", "fortune" /*"8chan",*/, "4chan", "bible", "radio", "bird"}, ", ")
 	s.ChannelMessageSend(m.ChannelID, "The possible commands Yuudachi will like: "+usage+".")
 }

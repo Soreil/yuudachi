@@ -2,8 +2,6 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"math/rand"
-	"strconv"
 	"strings"
 )
 
@@ -50,7 +48,7 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "4chan", "4ch":
 			if len(tokens) > 1 {
 				//Only want one word since that's all the API can take.
-				switch tokens[1] {
+				switch strings.Trim(tokens[1], `\/`) {
 				case "cm", "y", "gif", "e", "h", "hc", "b", "mlp", "lgbt", "soc", "s", "hm", "d", "t", "aco", "r", "pol":
 					s.ChannelMessageSend(m.ChannelID, "I am a Christian bot, please don't make me blacklist you.\nFor now consider one of the following books instead for your reading pleasure.")
 					bibleBooks(s, m)
@@ -73,18 +71,18 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 				//fortune(s, m, "")
 				radio(s, m, "")
 			}
-		case "8chan", "8ch":
-			if len(tokens) > 1 {
-				s.ChannelMessageSend(m.ChannelID, "I don't really like 8chan but maybe I'll let you look.")
-				if roll := rand.Intn(6) + 1; roll != 6 {
-					s.ChannelMessageSend(m.ChannelID, "You rolled a meagre: "+strconv.Itoa(roll)+"\nNo 8chan for you.")
-					return
-				}
-				//Only want one word since that's all the API can take.
-				eightchan(s, m, tokens[1])
-			} else {
-				s.ChannelMessageSend(m.ChannelID, "Provide a board please!")
-			}
+		//case "8chan", "8ch":
+		//	if len(tokens) > 1 {
+		//		s.ChannelMessageSend(m.ChannelID, "I don't really like 8chan but maybe I'll let you look.")
+		//		if roll := rand.Intn(6) + 1; roll != 6 {
+		//			s.ChannelMessageSend(m.ChannelID, "You rolled a meagre: "+strconv.Itoa(roll)+"\nNo 8chan for you.")
+		//			return
+		//		}
+		//		//Only want one word since that's all the API can take.
+		//		eightchan(s, m, tokens[1])
+		//	} else {
+		//		s.ChannelMessageSend(m.ChannelID, "Provide a board please!")
+		//	}
 		case "birb", "bird", "birds":
 			birds(s, m)
 		default:
