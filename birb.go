@@ -18,7 +18,6 @@ func birds(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if err := s.MessageReactionAdd(m.ChannelID, m.ID, emoji.APIName()); err != nil {
 				log.Println(err)
 			}
-			birds = append(birds, emoji.APIName())
 		}
 	}
 	s.ChannelMessageSend(m.ChannelID, birds[rand.Intn(len(birds))])
