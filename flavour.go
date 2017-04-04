@@ -33,6 +33,7 @@ func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 					}
 				}
 			}
+			return
 		}
 	}
 

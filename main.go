@@ -13,6 +13,10 @@ import (
 	"github.com/dghubble/oauth1"
 )
 
+//Twitter timestamp format: "Wed Aug 27 13:08:45 +0000 2008" (time.RubyDate)
+//Discord timestamp format: "2016-03-24T23:15:59.605000+00:00" (RFC3339 (nano) but using a '+/-' (time-numoffset))
+const RFC3339Discord = "2016-04-04T20:05:59.605500+00:00"
+
 // Variables used for command line parameters
 var (
 	botID   string
@@ -48,14 +52,14 @@ func main() {
 	}
 	log.Println("Keys gotten")
 	bibleToken = *bibleAccessToken
+
 	config := oauth1.NewConfig(*twitterConsumerKey, *twitterConsumerSecret)
 	token := oauth1.NewToken(*twitterAccessToken, *twitterAccessSecret)
 	log.Println("Twitter tokens done")
 	// OAuth1 http.Client will automatically authorize Requests
-	rawTwitterClient = config.Client(oauth1.NoContext, token)
+	twitterClient = twitterWrapper{nil, config.Client(oauth1.NoContext, token)}
+	twitterClient.Client = twitter.NewClient(twitterClient.Raw)
 
-	// Twitter client
-	twitterClient = twitter.NewClient(rawTwitterClient)
 	log.Println("Twitter set up")
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + *discordBotToken)
@@ -79,11 +83,13 @@ func main() {
 	dg.AddHandler(command)
 	dg.AddHandler(tatsumaki)
 	log.Println("Handlers added")
-	err = dg.Open()
-	if err != nil {
+
+	if err := dg.Open(); err != nil {
 		log.Fatalln("error opening connection,", err)
 	}
 	log.Println("Discord opened")
+	go latestTweet()
+	//dg.AddHandlerOnce(bye)
 	fmt.Println("Succesfully initialized")
 	<-make(chan struct{})
 }

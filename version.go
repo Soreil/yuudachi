@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-const appVersion = `19-02-2017
-"8CH IS GONE!"`
+const appVersion = `4-4-2017
+"Chicken"`
 
 func figlet(s string) (string, error) {
 	cmd := exec.Command("figlet", "-p", s)
