@@ -2,12 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/Soreil/strip"
 	"github.com/bwmarrin/discordgo"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
+	"unicode"
 )
 
 var bibleToken string
@@ -228,20 +230,11 @@ func bibleSearch(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 			s.ChannelMessageSend(m.ChannelID, query+":"+http.StatusText(http.StatusNotFound))
 			return
 		}
-		verse := result.Response.Search.Result.Passages[rand.Intn(len(result.Response.Search.Result.Passages))].Text
-		verse = html2markup(verse)
-		//DAS RITE
-		if strings.Contains(strings.ToLower(query), `lord`) {
-			if strings.ToLower(query) == `lord` {
-				verse = strings.Replace(verse, `LORD`, "__**LORD**__", -1)
-			} else {
-				verse = strings.Replace(verse, `LORD`, "* __***LORD***__ *", -1)
-			}
-		} else {
-			verse = strings.Replace(verse, `LORD`, "__***LORD***__", -1)
-		}
+		passage := result.Response.Search.Result.Passages[rand.Intn(len(result.Response.Search.Result.Passages))].Text
+		passage = clean(passage)
+		log.Println(passage)
 
-		lines := strings.Split(verse, "\n")
+		lines := strings.Split(passage, "\n")
 		for _, line := range lines {
 			_, err = s.ChannelMessageSend(m.ChannelID, line)
 			if err != nil {
@@ -257,17 +250,8 @@ func bibleSearch(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 			return
 		}
 		verse := result.Response.Search.Result.Verses[rand.Intn(len(result.Response.Search.Result.Verses))].Text
-		verse = html2markup(verse)
-		//DAS RITE
-		if strings.Contains(strings.ToLower(query), `lord`) {
-			if strings.ToLower(query) == `lord` {
-				verse = strings.Replace(verse, `LORD`, "__**LORD**__", -1)
-			} else {
-				verse = strings.Replace(verse, `LORD`, "* __***LORD***__ *", -1)
-			}
-		} else {
-			verse = strings.Replace(verse, `LORD`, "__***LORD***__", -1)
-		}
+		verse = clean(verse)
+		log.Println(verse)
 
 		_, err = s.ChannelMessageSend(m.ChannelID, verse)
 		if err != nil {
@@ -277,11 +261,59 @@ func bibleSearch(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 	}
 }
 
-func html2markup(text string) string {
-	text = strings.Replace(text, `<em>`, "*", -1)
-	text = strings.Replace(text, `</em>`, "*", -1)
-	text = strings.Replace(text, `<sup>`, "**", -1)
-	text = strings.Replace(text, `</sup> `, "** ", -1)
-	text = strings.Replace(text, `</sup>`, "** ", -1)
-	return text
+func clean(html string) string {
+	for currentTag := 0; currentTag != -1; {
+		var tagStart int
+		if tagStart = strings.Index(html[currentTag:], "<"); tagStart != -1 {
+			tagStart += currentTag
+			log.Println("we got a tag")
+			if tagEnd := strings.Index(html[tagStart:], ">"); tagEnd != -1 {
+				tagEnd += tagStart
+				log.Println("we got a tagend", html[tagStart+1:tagEnd])
+				if strings.Contains(html[tagStart:tagEnd], "h1") ||
+					strings.Contains(html[tagStart:tagEnd], "h2") ||
+					strings.Contains(html[tagStart:tagEnd], "h3") ||
+					strings.Contains(html[tagStart:tagEnd], "h4") {
+					log.Println("we got a heading")
+					html = html[:tagEnd+1] + "**" + html[tagEnd+1:]
+				}
+				if strings.Contains(html[tagStart:tagEnd], "sup") && !strings.Contains(html[tagStart:tagEnd], "/sup") {
+					log.Println("We got a sup")
+					if nextTag := strings.Index(html[tagEnd:], "<"); nextTag != -1 {
+						nextTag += tagEnd
+						supString := html[tagEnd+1 : nextTag]
+						log.Println(supString)
+						supString = strings.Map(func(r rune) rune {
+							//We need to use this ugly switch since unicode superscripts are not a codepoint range
+							if unicode.IsDigit(r) {
+								switch r - '0' {
+								case 0, 4, 5, 6, 7, 8, 9:
+									return r - '0' + '⁰'
+								case 1:
+									return '¹'
+								case 2:
+									return '²'
+								case 3:
+									return '³'
+								}
+							}
+							return -1
+						}, supString)
+						log.Println(supString)
+						html = html[:tagEnd+1] + "**" + supString + "**" + html[nextTag:]
+					}
+				}
+			}
+		}
+		if tagStart == -1 {
+			currentTag = -1
+		} else {
+			currentTag = tagStart + 1
+		}
+	}
+
+	html = strip.StripTags(html)
+	//DAS RITE
+	html = strings.Replace(html, `LORD`, "__**LORD**__", -1)
+	return html
 }
