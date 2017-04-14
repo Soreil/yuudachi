@@ -83,8 +83,10 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 		//	} else {
 		//		s.ChannelMessageSend(m.ChannelID, "Provide a board please!")
 		//	}
-		case "birb", "bird", "birds":
+		case "b", "birb", "bird", "birds":
 			birds(s, m)
+		case "clap", "👏", "c":
+			clap(s, m, tokens[1:])
 		default:
 			s.ChannelMessageSend(m.ChannelID, "Unrecognized command: "+tokens[0])
 			usage(s, m)
