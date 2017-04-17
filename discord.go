@@ -25,19 +25,19 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 		switch strings.ToLower(tokens[0]) {
-		case "twitter":
+		case "twitter", "t":
 			if len(tokens) > 1 {
 				switch tokens[1] {
-				case "tweet", "search", "random":
+				case "tweet", "search", "random", "s":
 					//Reuses the whole message
 					randomTweet(s, m, strings.Join(tokens[2:], " "))
-				case "trends", "trend", "trending":
+				case "trends", "trend", "trending", "r":
 					trending(s, m)
 				}
 			}
-		case "version":
+		case "version", "v":
 			version(s, m)
-		case "fortune":
+		case "fortune", "f":
 			if len(tokens) > 1 {
 				//Only want one word since that's all the API can take.
 				fortune(s, m, tokens[1])
@@ -62,27 +62,19 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if len(tokens) > 1 {
 				bibleSearch(s, m, strings.Join(tokens[1:], " "))
 			}
-		case "radio", `r/a/dio`, `r-a-dio`, `r-a-d.io`:
+		case "r", "radio", `r/a/dio`, `r-a-dio`, `r-a-d.io`:
 			if len(tokens) > 1 {
-				//Only want one word since that's all the API can take.
-				radio(s, m, tokens[1])
+				switch tokens[1] {
+				case "now", "current", "dj", "np":
+					radioCurrent(s, m)
+				case "q", "queue", "next":
+					radioQueue(s, m)
+				default:
+					radioHelp(s, m)
+				}
 			} else {
-				//Can also be called without a word.
-				//fortune(s, m, "")
-				radio(s, m, "")
+				radioCurrent(s, m)
 			}
-		//case "8chan", "8ch":
-		//	if len(tokens) > 1 {
-		//		s.ChannelMessageSend(m.ChannelID, "I don't really like 8chan but maybe I'll let you look.")
-		//		if roll := rand.Intn(6) + 1; roll != 6 {
-		//			s.ChannelMessageSend(m.ChannelID, "You rolled a meagre: "+strconv.Itoa(roll)+"\nNo 8chan for you.")
-		//			return
-		//		}
-		//		//Only want one word since that's all the API can take.
-		//		eightchan(s, m, tokens[1])
-		//	} else {
-		//		s.ChannelMessageSend(m.ChannelID, "Provide a board please!")
-		//	}
 		case "b", "birb", "bird", "birds":
 			birds(s, m)
 		case "clap", "👏", "c":
