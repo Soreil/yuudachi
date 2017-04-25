@@ -11,7 +11,7 @@ func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	if m.Author.Bot || m.Author.Username == "Liru" {
 		if m.Author.Username == "Liru" && strings.Contains(strings.ToLower(m.Content), "awooo") {
-			s.ChannelMessageSend(m.ChannelID, "No shouting Liru!")
+			ChannelMessageSendDeleteAble(s, m, "No shouting Liru!")
 		}
 		return
 	}
@@ -20,7 +20,7 @@ func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 	pois := strings.Fields(strings.ToLower(m.Content))
 	for _, word := range pois {
 		if word == "poi" {
-			_, err := s.ChannelMessageSendTTS(m.ChannelID, "Poi!")
+			_, err := ChannelMessageSendDeleteAble(s, m, "Poi!")
 			if err != nil {
 				log.Println(err)
 			}
@@ -38,12 +38,12 @@ func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if strings.Contains(strings.ToLower(m.Content), "kill "+strings.ToLower(botName)) {
-		s.ChannelMessageSend(m.ChannelID, "EVASIVE MANOUVRES")
+		ChannelMessageSendDeleteAble(s, m, "EVASIVE MANOUVRES")
 	}
 
 	for _, user := range m.Mentions {
 		if user.ID == botID {
-			s.ChannelMessageSend(m.ChannelID, "Thank you for the kind message, <@"+m.Author.ID+">")
+			ChannelMessageSendDeleteAble(s, m, "Thank you for the kind message, <@"+m.Author.ID+">")
 		}
 	}
 }

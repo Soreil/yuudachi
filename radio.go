@@ -6,6 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -52,11 +53,13 @@ type Current struct {
 	} `json:"main"`
 }
 
-const u = `https://r-a-d.io/api`
+const api = `https://r-a-d.io/api`
+const frontpage = `https://r-a-d.io`
+const radioRed = 0xDF4C3A
 
 func radioState() (Current, error) {
 	//Get the current state structure from the r/a/dio API
-	resp, err := http.Get(u)
+	resp, err := http.Get(api)
 	if err != nil {
 		return Current{}, err
 	}
@@ -77,7 +80,7 @@ func radioState() (Current, error) {
 }
 
 func radioHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
-	s.ChannelMessageSend(m.ChannelID, "Usage: !radio [queue, dj]")
+	ChannelMessageSendDeleteAble(s, m, "Usage: !radio [queue, dj]")
 }
 
 func radioQueue(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -87,16 +90,30 @@ func radioQueue(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if !record.Main.Isafkstream {
-		s.ChannelMessageSend(m.ChannelID, "Sadly Hanyuu is not in a position to play the current queue, a DJ is playing!")
+		ChannelMessageSendDeleteAble(s, m, "Sadly Hanyuu is not in a position to play the current queue, a DJ is playing!")
 		return
 	}
-	queue := make([]string, len(record.Main.Queue)+1)
-	queue[0] = "r/a/dio playback queue:"
-	for i := range queue[1:] {
-		queue[i+1] = (time.Duration(time.Unix(record.Main.Queue[i].Timestamp, 0).Sub(time.Now().In(time.UTC)).Seconds()) * time.Second).String() + ": " + record.Main.Queue[i].Meta
-
+	queue := make([]*discordgo.MessageEmbedField, len(record.Main.Queue))
+	for i := range queue {
+		timeLeft := (time.Duration(time.Unix(record.Main.Queue[i].Timestamp, 0).Sub(time.Now().In(time.UTC)).Seconds()) * time.Second).String()
+		for i := 0; i < len(timeLeft)-10; i++ {
+			timeLeft = " " + timeLeft
+		}
+		queue[i] = new(discordgo.MessageEmbedField)
+		queue[i].Name = timeLeft + " from now"
+		queue[i].Value = record.Main.Queue[i].Meta
+		queue[i].Inline = false
 	}
-	s.ChannelMessageSend(m.ChannelID, strings.Join(queue, "\n"))
+
+	embed := &discordgo.MessageEmbed{URL: frontpage,
+		Title:     "Playback queue",
+		Color:     radioRed,
+		Footer:    &discordgo.MessageEmbedFooter{Text: "Now playing: " + record.Main.Np},
+		Author:    &discordgo.MessageEmbedAuthor{Name: record.Main.Djname, IconURL: api + "/dj-image/" + record.Main.Dj.Djimage},
+		Thumbnail: &discordgo.MessageEmbedThumbnail{URL: api + "/dj-image/" + record.Main.Dj.Djimage},
+		Fields:    queue,
+	}
+	ChannelMessageSendEmbedDeleteAble(s, m, embed)
 }
 
 func radioCurrent(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -106,40 +123,111 @@ func radioCurrent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	var parts []string
-	time.Duration(record.Main.Current - record.Main.StartTime).String()
-	parts = append(parts, "Present DJ: "+record.Main.Dj.Djname)
-	parts = append(parts, "Present song: "+record.Main.Np)
-	parts = append(parts, "Present time: "+(time.Duration(record.Main.Current-record.Main.StartTime)*time.Second).String()+" / "+(time.Duration(record.Main.EndTime-record.Main.StartTime)*time.Second).String())
-	if record.Main.Thread != "" && record.Main.Thread != "none" {
-		parts = append(parts, "Present place: "+record.Main.Thread)
+	footer := new(discordgo.MessageEmbedFooter)
+	if !record.Main.Isafkstream {
+		footer.Text = "Current thread: " + record.Main.Thread
 	} else {
-		parts = append(parts, "There is no thread up at the moment.")
+		footer.Text = "Upcoming: " + record.Main.Queue[0].Meta
 	}
-	s.ChannelMessageSend(m.ChannelID, strings.Join(parts, "\n"))
 
-	imgresp, err := http.Get(u + "/dj-image/" + record.Main.Dj.Djimage)
+	progress := (time.Duration(record.Main.Current-record.Main.StartTime) * time.Second).String() + " / " + (time.Duration(record.Main.EndTime-record.Main.StartTime) * time.Second).String()
+
+	fields := make([]*discordgo.MessageEmbedField, 2)
+	fields[0] = new(discordgo.MessageEmbedField)
+	fields[1] = new(discordgo.MessageEmbedField)
+
+	fields[1].Name = record.Main.Dj.Djname
+	fields[1].Inline = false
+	fields[1].Value = "Listeners: " + strconv.Itoa(record.Main.Listeners)
+	fields[0].Name = record.Main.Np
+	fields[0].Value = progress
+	fields[0].Inline = false
+
+	embed := &discordgo.MessageEmbed{URL: frontpage,
+		Title:     "Now playing",
+		Color:     radioRed,
+		Footer:    footer,
+		Thumbnail: &discordgo.MessageEmbedThumbnail{URL: api + "/dj-image/" + record.Main.Dj.Djimage},
+		Fields:    fields,
+	}
+	if _, err := ChannelMessageSendEmbedDeleteAble(s, m, embed); err != nil {
+		log.Println(err)
+	}
+}
+
+type Songs []struct {
+	Artist        string `json:"artist"`
+	Title         string `json:"title"`
+	ID            int    `json:"id"`
+	Lastplayed    int    `json:"lastplayed"`
+	Lastrequested int    `json:"lastrequested"`
+	Requestable   bool   `json:"requestable"`
+}
+
+type Search struct {
+	Total       int   `json:"total"`
+	PerPage     int   `json:"per_page"`
+	CurrentPage int   `json:"current_page"`
+	LastPage    int   `json:"last_page"`
+	From        int   `json:"from"`
+	To          int   `json:"to"`
+	Data        Songs `json:"data"`
+}
+
+func radioSearchResults(query string) Songs {
+	const searchAPI = api + "/search/"
+	//Get the current state structure from the r/a/dio API
+	resp, err := http.Get(searchAPI + query)
 	if err != nil {
 		log.Println(err)
-		return
-	}
-	defer imgresp.Body.Close()
-
-	if imgresp.StatusCode != http.StatusOK {
-		log.Println("Failed to fetch: " + http.StatusText(imgresp.StatusCode))
-		return
 	}
 
-	var format string
-	switch t := imgresp.Header.Get("Content-Type"); {
-	case strings.Contains(t, "png"):
-		format = "png"
-	case strings.Contains(t, "jpg"), strings.Contains(t, "jpeg"):
-		format = "jpeg"
-	case strings.Contains(t, "gif"):
-		format = "gif"
-	default:
-		format = "unknown"
+	if resp.StatusCode != http.StatusOK {
+		log.Println("Error: " + http.StatusText(resp.StatusCode))
 	}
-	s.ChannelFileSend(m.ChannelID, record.Main.Dj.Djimage+"."+format, imgresp.Body)
+	defer resp.Body.Close()
+
+	// Fill the record with the data from the JSON
+	var record Search
+
+	// Use json.Decode for reading streams of JSON data
+	if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
+		log.Println(err)
+	}
+
+	var songs Songs
+	songs = append(songs, record.Data...)
+
+	for i := 2; i <= record.LastPage; i++ {
+		resp, err := http.Get(searchAPI + query + "?page=" + strconv.Itoa(i))
+		if err != nil {
+			log.Println(err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			log.Println("Error: " + http.StatusText(resp.StatusCode))
+		}
+
+		// Fill the record with the data from the JSON
+		var record Search
+
+		// Use json.Decode for reading streams of JSON data
+		if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
+			log.Println(err)
+		}
+		songs = append(songs, record.Data...)
+		resp.Body.Close()
+	}
+	return songs
+}
+
+func radioSearch(s *discordgo.Session, m *discordgo.MessageCreate, name string) {
+	songs := radioSearchResults(name)
+	lines := make([]string, len(songs))
+	for i := range lines {
+		lines[i] = songs[i].Artist + " - " + "[" + songs[i].Title + "]" + "(" + `https://r-a-d.io/request/` + strconv.Itoa(songs[i].ID) + ")"
+	}
+	if _, err := ChannelMessageSendDeleteAble(s, m, strings.Join(lines, "\n")); err != nil {
+		log.Println(err)
+	}
 }

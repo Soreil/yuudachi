@@ -84,7 +84,7 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 
 	u := "https://a.4cdn.org/"
 	if board == "help" {
-		s.ChannelMessageSend(m.ChannelID, "4chan usage:\n!4chan BOARD\nWhere category is one of the standard boards.")
+		ChannelMessageSendDeleteAble(s, m, "4chan usage:\n!4chan BOARD\nWhere category is one of the standard boards.")
 		return
 	}
 	u += board + "/catalog.json"
@@ -130,7 +130,7 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 
 	img := fmt.Sprintf("https://i.4cdn.org/%s/%d%s", board, thread.Tim, thread.Ext)
 	link := fmt.Sprintf("<https://i.4cdn.org/%s/thread/%d>", board, thread.No)
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s\n%s\n\n%s", thread.Sub, thread.Com, link))
+	ChannelMessageSendDeleteAble(s, m, fmt.Sprintf("%s\n%s\n\n%s", thread.Sub, thread.Com, link))
 
 	imgresp, err := http.Get(img)
 
@@ -183,13 +183,13 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 //		Page int `json:"page"`
 //	}
 //
-//	u := "https://8ch.net/"
+//	api := "https://8ch.net/"
 //	if board == "help" {
-//		s.ChannelMessageSend(m.ChannelID, "8chan usage:\n!8chan BOARD\nWhere category is one of the standard boards.")
+//		ChannelMessageSendDeleteAble(s,m, "8chan usage:\n!8chan BOARD\nWhere category is one of the standard boards.")
 //		return
 //	}
-//	u += board + "/catalog.json"
-//	resp, err := http.Get(u)
+//	api += board + "/catalog.json"
+//	resp, err := http.Get(api)
 //	if err != nil {
 //		log.Fatal("Do: ", err)
 //		return
@@ -249,7 +249,7 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 //	}
 //
 //	link := fmt.Sprintf("<https://8ch.net/%s/res/%d.html>", board, thread.No)
-//	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s\n%s\n\n%s", thread.Sub, thread.Com, link))
+//	ChannelMessageSendDeleteAble(s,m, fmt.Sprintf("%s\n%s\n\n%s", thread.Sub, thread.Com, link))
 //
 //	if err != nil {
 //		log.Println(err)

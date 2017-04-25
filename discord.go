@@ -25,6 +25,8 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 		switch strings.ToLower(tokens[0]) {
+		case "delete", "delet":
+			ChannelMessageDelete(s, m)
 		case "twitter", "t":
 			if len(tokens) > 1 {
 				switch tokens[1] {
@@ -50,13 +52,13 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 				//Only want one word since that's all the API can take.
 				switch strings.Trim(tokens[1], `\/`) {
 				case "cm", "y", "gif", "e", "h", "hc", "b", "mlp", "lgbt", "soc", "s", "hm", "d", "t", "aco", "r", "pol":
-					s.ChannelMessageSend(m.ChannelID, "I am a Christian bot, please don't make me blacklist you.\nFor now consider one of the following books instead for your reading pleasure.")
+					ChannelMessageSendDeleteAble(s, m, "I am a Christian bot, please don't make me blacklist you.\nFor now consider one of the following books instead for your reading pleasure.")
 					bibleBooks(s, m)
 					return
 				}
 				fourchan(s, m, tokens[1])
 			} else {
-				s.ChannelMessageSend(m.ChannelID, "Provide a board please!")
+				ChannelMessageSendDeleteAble(s, m, "Provide a board please!")
 			}
 		case "bible":
 			if len(tokens) > 1 {
@@ -69,18 +71,26 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 					radioCurrent(s, m)
 				case "q", "queue", "next":
 					radioQueue(s, m)
+				case "search", "s":
+					if len(tokens) > 2 {
+						radioSearch(s, m, strings.Join(tokens[2:], " "))
+					}
 				default:
 					radioHelp(s, m)
 				}
 			} else {
 				radioCurrent(s, m)
 			}
+		case "np", "song", "dj":
+			radioCurrent(s, m)
+		case "queue", "next":
+			radioQueue(s, m)
 		case "b", "birb", "bird", "birds":
 			birds(s, m)
 		case "clap", "👏", "c":
 			clap(s, m, tokens[1:])
 		default:
-			s.ChannelMessageSend(m.ChannelID, "Unrecognized command: "+tokens[0])
+			ChannelMessageSendDeleteAble(s, m, "Unrecognized command: "+tokens[0])
 			usage(s, m)
 		}
 	}

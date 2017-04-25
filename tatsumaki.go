@@ -16,7 +16,7 @@ func tatsumaki(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 	if strings.Contains(strings.ToLower(m.Content), "gelbooru") {
-		if _, err := s.ChannelMessageSend(m.ChannelID, clear); err != nil {
+		if _, err := ChannelMessageSendDeleteAble(s, m, clear); err != nil {
 			log.Println(err)
 		}
 	}

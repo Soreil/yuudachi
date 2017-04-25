@@ -41,40 +41,40 @@ func randomTweet(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 		log.Println(err)
 		return
 	}
-	if len(search.Statuses) != 0 {
-		t := search.Statuses[rand.Intn(len(search.Statuses)-1)]
-		if t.RetweetedStatus != nil {
-			t = *t.RetweetedStatus
-		}
-		//log.Printf("%+v\n",t.Entities)
-		//log.Printf("%+v\n",t.ExtendedEntities)
+	if len(search.Statuses) == 0 {
+		ChannelMessageSendDeleteAble(s, m, "Sadly there were no results for: "+query+" on twitter.")
+		return
+	}
+	t := search.Statuses[rand.Intn(len(search.Statuses)-1)]
+	if t.RetweetedStatus != nil {
+		t = *t.RetweetedStatus
+	}
 
-		img := &discordgo.MessageEmbedImage{}
-		thumb := &discordgo.MessageEmbedThumbnail{}
+	img := &discordgo.MessageEmbedImage{}
+	thumb := &discordgo.MessageEmbedThumbnail{}
 
-		if len(t.Entities.Media) > 0 {
-			img.URL = t.Entities.Media[0].MediaURLHttps
-			img.Height = t.Entities.Media[0].Sizes.Medium.Height
-			img.Width = t.Entities.Media[0].Sizes.Medium.Height
+	if len(t.Entities.Media) > 0 {
+		img.URL = t.Entities.Media[0].MediaURLHttps
+		img.Height = t.Entities.Media[0].Sizes.Medium.Height
+		img.Width = t.Entities.Media[0].Sizes.Medium.Height
 
-		}
-		thumb.URL = t.User.ProfileImageURLHttps
+	}
+	thumb.URL = t.User.ProfileImageURLHttps
 
-		tim, err := time.Parse(time.RubyDate, t.CreatedAt)
-		if err != nil {
-			log.Printf("Failed to parse twitter time: %s", err.Error())
-		}
-		embed := &discordgo.MessageEmbed{URL: "https://twitter.com/statuses/" + t.IDStr,
-			Title: t.User.Name, Type: "rich", Timestamp: tim.Format(time.RFC3339Nano), Footer: &discordgo.MessageEmbedFooter{Text: fmt.Sprintf("Reweets: %d\tLikes: %d", t.RetweetCount, t.FavoriteCount)},
-			Image: img, Thumbnail: thumb, Description: t.Text}
-		embed.Fields = append(embed.Fields)
-		if _, err := s.ChannelMessageSendEmbed(m.ChannelID, embed); err != nil {
-			log.Println(err, tim.Format(RFC3339Discord), tim.Format(time.RFC3339Nano), tim, t.CreatedAt)
-		}
-	} else {
-		s.ChannelMessageSend(m.ChannelID, "Sadly there were no results for: "+query+" on twitter.")
+	tim, err := time.Parse(time.RubyDate, t.CreatedAt)
+	if err != nil {
+		log.Printf("Failed to parse twitter time: %s", err.Error())
+		return
+	}
+	embed := &discordgo.MessageEmbed{URL: "https://twitter.com/statuses/" + t.IDStr,
+		Title:                        t.User.Name, Type: "rich", Timestamp: tim.Format(time.RFC3339Nano), Footer: &discordgo.MessageEmbedFooter{Text: fmt.Sprintf("Reweets: %d\tLikes: %d", t.RetweetCount, t.FavoriteCount)},
+		Image:                        img, Thumbnail: thumb, Description: t.Text}
+	embed.Fields = append(embed.Fields)
+	if _, err := ChannelMessageSendEmbedDeleteAble(s, m, embed); err != nil {
+		log.Println(err)
 	}
 }
+
 func trending(s *discordgo.Session, m *discordgo.MessageCreate) {
 	type Trend []struct {
 		Trends []struct {
@@ -112,5 +112,5 @@ func trending(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		}
 	}
-	s.ChannelMessageSend(m.ChannelID, strings.Join(out, "\n"))
+	ChannelMessageSendDeleteAble(s, m, strings.Join(out, "\n"))
 }

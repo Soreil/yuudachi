@@ -20,5 +20,6 @@ func birds(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		}
 	}
-	s.ChannelMessageSend(m.ChannelID, birds[rand.Intn(len(birds))])
+
+	ChannelMessageSendDeleteAble(s, m, birds[rand.Intn(len(birds))])
 }
