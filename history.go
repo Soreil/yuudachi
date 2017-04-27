@@ -6,12 +6,12 @@ import (
 )
 
 var posts struct {
-	m map[*discordgo.Guild][]*discordgo.Message
+	m map[*discordgo.Guild]map[string][]*discordgo.Message
 	sync.Mutex
 }
 
 func init() {
-	posts.m = make(map[*discordgo.Guild][]*discordgo.Message)
+	posts.m = make(map[*discordgo.Guild]map[string][]*discordgo.Message)
 }
 
 func ChannelMessageDelete(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -21,14 +21,26 @@ func ChannelMessageDelete(s *discordgo.Session, m *discordgo.MessageCreate) {
 	posts.Lock()
 	defer posts.Unlock()
 
-	if len(posts.m[gu]) == 0 {
+	if _, ok := posts.m[gu][ch.ID]; !ok {
 		return
 	}
-	err := s.ChannelMessageDelete(posts.m[gu][len(posts.m[gu])-1].ChannelID, posts.m[gu][len(posts.m[gu])-1].ID)
-	posts.m[gu] = posts.m[gu][:len(posts.m[gu])-1]
+	if len(posts.m[gu][ch.ID]) == 0 {
+		return
+	}
+	err := s.ChannelMessageDelete(posts.m[gu][ch.ID][len(posts.m[gu])-1].ChannelID, posts.m[gu][ch.ID][len(posts.m[gu])-1].ID)
+	posts.m[gu][ch.ID] = posts.m[gu][ch.ID][:len(posts.m[gu])-1]
 	if err != nil {
 		panic(err)
 	}
+}
+
+func addChannelMessageDeleteAble(s *discordgo.Session, m *discordgo.MessageCreate, message *discordgo.Message) {
+	ch, _ := s.Channel(m.ChannelID)
+	gu, _ := s.Guild(ch.GuildID)
+	if _, ok := posts.m[gu]; !ok {
+		posts.m[gu] = make(map[string][]*discordgo.Message)
+	}
+	posts.m[gu][ch.ID] = append(posts.m[gu][ch.ID], message)
 }
 
 func ChannelMessageSendDeleteAble(s *discordgo.Session, m *discordgo.MessageCreate, content string) (*discordgo.Message, error) {
@@ -36,21 +48,15 @@ func ChannelMessageSendDeleteAble(s *discordgo.Session, m *discordgo.MessageCrea
 	defer posts.Unlock()
 
 	message, err := s.ChannelMessageSend(m.ChannelID, content)
-	ch, _ := s.Channel(m.ChannelID)
-	gu, _ := s.Guild(ch.GuildID)
-	posts.m[gu] = append(posts.m[gu], message)
-
+	addChannelMessageDeleteAble(s, m, message)
 	return message, err
 }
 
-func ChannelMessageSendTTSDeleteAble(s *discordgo.Session, m *discordgo.MessageCreate, content string) (*discordgo.Message, error) {
+func _(s *discordgo.Session, m *discordgo.MessageCreate, content string) (*discordgo.Message, error) {
 	posts.Lock()
 	defer posts.Unlock()
 	message, err := s.ChannelMessageSendTTS(m.ChannelID, content)
-	ch, _ := s.Channel(m.ChannelID)
-	gu, _ := s.Guild(ch.GuildID)
-	posts.m[gu] = append(posts.m[gu], message)
-
+	addChannelMessageDeleteAble(s, m, message)
 	return message, err
 }
 
@@ -58,9 +64,6 @@ func ChannelMessageSendEmbedDeleteAble(s *discordgo.Session, m *discordgo.Messag
 	posts.Lock()
 	defer posts.Unlock()
 	message, err := s.ChannelMessageSendEmbed(m.ChannelID, content)
-	ch, _ := s.Channel(m.ChannelID)
-	gu, _ := s.Guild(ch.GuildID)
-	posts.m[gu] = append(posts.m[gu], message)
-
+	addChannelMessageDeleteAble(s, m, message)
 	return message, err
 }
