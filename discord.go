@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
+	"strconv"
 )
 
 func command(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -63,6 +64,15 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "bible":
 			if len(tokens) > 1 {
 				bibleSearch(s, m, strings.Join(tokens[1:], " "))
+			}
+		case "breads", "bread", ":bread:", "🍞":
+			if len(tokens) > 2 {
+				n, err := strconv.ParseFloat(tokens[1], 64)
+				if err != nil {
+					ChannelMessageSendDeleteAble(s, m, "Failed to read conversion amount.")
+					return
+				}
+				breads(s, m, n, strings.ToUpper(tokens[2]))
 			}
 		case "r", "radio", `r/a/dio`, `r-a-dio`, `r-a-d.io`:
 			if len(tokens) > 1 {
