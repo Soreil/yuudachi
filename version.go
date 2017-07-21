@@ -8,7 +8,7 @@ import (
 )
 
 const appVersion = `21-7-2017
-*Make myself wanted edition*`
+*4chan embeds*`
 const useFiglet = false
 
 func figlet(s string) (string, error) {
