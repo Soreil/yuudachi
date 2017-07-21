@@ -1,13 +1,14 @@
 package main
 
 import (
-	"net/http"
-	"log"
-	"errors"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"strconv"
+	"log"
 	"math"
+	"net/http"
+	"strconv"
 )
 
 const breadBase = "RON"
@@ -16,30 +17,47 @@ const breadRatio = 1.0
 const currencyAPI = `https://api.fixer.io/latest?base=` + breadBase
 
 type Currency struct {
-	Base  string `json:"base"`
-	Date  string `json:"date"`
+	Base  string                 `json:"base"`
+	Date  string                 `json:"date"`
 	Rates map[string]interface{} `json:"rates"`
 }
 
-func inBreads(amount float64, currency string) (float64, error) {
+func rates() (Currency, error) {
+	var rates Currency
 	resp, err := http.Get(currencyAPI)
 	if err != nil {
 		log.Println(err)
-		return 0, errors.New("Failed to get bread API")
+		return rates, errors.New("Failed to get bread API")
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return 0, errors.New(http.StatusText(resp.StatusCode))
+		return rates, errors.New(http.StatusText(resp.StatusCode))
 	}
-	var rates Currency
 	if err := json.NewDecoder(resp.Body).Decode(&rates); err != nil {
 		panic(err)
 	}
-
+	return rates, nil
+}
+func inBreads(amount float64, currency string) (float64, error) {
+	rates, err := rates()
+	if err != nil {
+		return 0, err
+	}
 	if r, ok := rates.Rates[currency].(float64); !ok {
 		return r, errors.New(currency + ": Unknown currency")
 	}
 	return breadRatio / rates.Rates[currency].(float64) * amount, nil
+}
+
+func fromBreads(amount float64, currency string) (float64, error) {
+	rates, err := rates()
+	if err != nil {
+		return 0, err
+	}
+	if r, ok := rates.Rates[currency].(float64); !ok {
+		return r, errors.New(currency + ": Unknown currency")
+	}
+	return breadRatio * rates.Rates[currency].(float64) * amount, nil
 }
 
 func breads(s *discordgo.Session, m *discordgo.MessageCreate, amount float64, currency string) {
@@ -48,5 +66,14 @@ func breads(s *discordgo.Session, m *discordgo.MessageCreate, amount float64, cu
 		ChannelMessageSendDeleteAble(s, m, err.Error())
 	} else {
 		ChannelMessageSendDeleteAble(s, m, "That's "+strconv.Itoa(int(b))+" breads and "+strconv.Itoa(int((b-math.Trunc(b))*20))+" slices.")
+	}
+}
+
+func fiats(s *discordgo.Session, m *discordgo.MessageCreate, amount float64, currency string) {
+	b, err := fromBreads(amount, currency)
+	if err != nil {
+		ChannelMessageSendDeleteAble(s, m, err.Error())
+	} else {
+		ChannelMessageSendDeleteAble(s, m, fmt.Sprintf("That's %02.2f %s.", b, currency))
 	}
 }

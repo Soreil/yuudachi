@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 func command(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -66,13 +66,21 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 				bibleSearch(s, m, strings.Join(tokens[1:], " "))
 			}
 		case "breads", "bread", ":bread:", "🍞":
-			if len(tokens) > 2 {
+			if len(tokens) == 3 {
 				n, err := strconv.ParseFloat(tokens[1], 64)
 				if err != nil {
 					ChannelMessageSendDeleteAble(s, m, "Failed to read conversion amount.")
 					return
 				}
 				breads(s, m, n, strings.ToUpper(tokens[2]))
+			}
+			if len(tokens) == 4 && tokens[2] == "to" {
+				n, err := strconv.ParseFloat(tokens[1], 64)
+				if err != nil {
+					ChannelMessageSendDeleteAble(s, m, "Failed to read conversion amount.")
+					return
+				}
+				fiats(s, m, n, strings.ToUpper(tokens[3]))
 			}
 		case "r", "radio", `r/a/dio`, `r-a-dio`, `r-a-d.io`:
 			if len(tokens) > 1 {
@@ -100,8 +108,8 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "clap", "👏", "c":
 			clap(s, m, tokens[1:])
 		default:
-			ChannelMessageSendDeleteAble(s, m, "Unrecognized command: "+tokens[0])
-			usage(s, m)
+			//ChannelMessageSendDeleteAble(s, m, "Unrecognized command: "+tokens[0])
+			//usage(s, m)
 		}
 	}
 }

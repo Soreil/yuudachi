@@ -7,8 +7,9 @@ import (
 	"strings"
 )
 
-const appVersion = `26-4-2017
-Delet this`
+const appVersion = `21-7-2017
+*Make myself wanted edition*`
+const useFiglet = false
 
 func figlet(s string) (string, error) {
 	cmd := exec.Command("figlet", "-p", s)
@@ -21,13 +22,16 @@ func figlet(s string) (string, error) {
 
 func version(s *discordgo.Session, m *discordgo.MessageCreate) {
 	msg := "Current version: " + appVersion
-	log.Println(msg)
-	fig, err := figlet(msg)
-	if err != nil {
-		ChannelMessageSendDeleteAble(s, m, msg)
-	} else {
-		ChannelMessageSendDeleteAble(s, m, "```"+fig+"```")
+	if useFiglet {
+		fig, err := figlet(msg)
+		if err != nil {
+			log.Println("Failed to create figlet text:", err)
+		} else {
+			ChannelMessageSendDeleteAble(s, m, "```"+fig+"```")
+			return
+		}
 	}
+	ChannelMessageSendDeleteAble(s, m, msg)
 }
 
 func usage(s *discordgo.Session, m *discordgo.MessageCreate) {

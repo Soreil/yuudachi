@@ -67,8 +67,8 @@ func randomTweet(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 		return
 	}
 	embed := &discordgo.MessageEmbed{URL: "https://twitter.com/statuses/" + t.IDStr,
-		Title:                        t.User.Name, Type: "rich", Timestamp: tim.Format(time.RFC3339Nano), Footer: &discordgo.MessageEmbedFooter{Text: fmt.Sprintf("Reweets: %d\tLikes: %d", t.RetweetCount, t.FavoriteCount)},
-		Image:                        img, Thumbnail: thumb, Description: t.Text}
+		Title:                            t.User.Name, Type: "rich", Timestamp: tim.Format(time.RFC3339Nano), Footer: &discordgo.MessageEmbedFooter{Text: fmt.Sprintf("Reweets: %d\tLikes: %d", t.RetweetCount, t.FavoriteCount)},
+		Image:                            img, Thumbnail: thumb, Description: t.Text}
 	embed.Fields = append(embed.Fields)
 	if _, err := ChannelMessageSendEmbedDeleteAble(s, m, embed); err != nil {
 		log.Println(err)

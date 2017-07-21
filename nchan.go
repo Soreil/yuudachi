@@ -13,6 +13,7 @@ import (
 )
 
 // Adds <> around the links to prevent embedding
+//TODO(sjon): Cleanup and verify correctness
 func unembedURL(s string) string {
 	start := strings.Index(s, "http")
 	if start == -1 {
@@ -81,18 +82,25 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 			MImg int `json:"m_img,omitempty"`
 		} `json:"threads"`
 	}
+	const (
+		apiRoot     = "https://a.4cdn.org"
+		usage       = "4chan usage:\n!4chan BOARD\nWhere category is one of the standard boards."
+		catalogRoot = "catalog.json"
+	)
 
-	u := "https://a.4cdn.org/"
+	//TODO(sjon): Implement this in a cleaner manner.
 	if board == "help" {
-		ChannelMessageSendDeleteAble(s, m, "4chan usage:\n!4chan BOARD\nWhere category is one of the standard boards.")
+		ChannelMessageSendDeleteAble(s, m, usage)
 		return
 	}
-	u += board + "/catalog.json"
-	resp, err := http.Get(u)
+
+	boardCatalog := apiRoot + "/" + board + "/" + catalogRoot
+	resp, err := http.Get(boardCatalog)
 	if err != nil {
 		log.Fatal("Do: ", err)
 		return
 	}
+
 	if err == nil && resp.StatusCode != http.StatusOK {
 		log.Println("Error: " + http.StatusText(resp.StatusCode))
 		return
@@ -104,13 +112,17 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 		log.Println(err)
 	}
 
+	//Extract random board page
 	page := record[rand.Intn(len(record)-1)]
+	//Extract random thread from the page
 	thread := page.Threads[rand.Intn(len(page.Threads)-1)]
+	//Try and filter out general threads, this method is awfully poor
 	for strings.Contains(strings.ToLower(thread.Sub), "general") {
 		page = record[rand.Intn(len(record)-1)]
 		thread = page.Threads[rand.Intn(len(page.Threads)-1)]
 	}
 
+	//Clean up text from the selected thread
 	thread.Sub, err = html2text.FromString(strings.Replace(thread.Sub, "<wbr>", "", -1))
 	if err != nil {
 		log.Println(err)
@@ -123,15 +135,22 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 		return
 	}
 
+	//Discord formatting for thread titles
 	if thread.Sub != "" {
 		thread.Sub = "*" + thread.Sub + "*" + "\n"
 	}
+
+	//Formatting URLs for Discord
 	thread.Com = unembedURL(thread.Com)
 
+	//We currently don't fetch images to upload to Discord ourselves.
 	img := fmt.Sprintf("https://i.4cdn.org/%s/%d%s", board, thread.Tim, thread.Ext)
+	//Thread link formatted for Discord
 	link := fmt.Sprintf("<https://i.4cdn.org/%s/thread/%d>", board, thread.No)
+	//To be replaced by a Discord Embed structure
 	ChannelMessageSendDeleteAble(s, m, fmt.Sprintf("%s\n%s\n\n%s", thread.Sub, thread.Com, link))
 
+	//The file should be part of the embed struct too
 	imgresp, err := http.Get(img)
 
 	if err != nil {
@@ -146,121 +165,4 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 	}
 
 	s.ChannelFileSend(m.ChannelID, thread.Filename+thread.Ext, imgresp.Body)
-
 }
-
-//func eightchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
-//	type Catalog []struct {
-//		Threads []struct {
-//			No            int    `json:"no"`
-//			Sub           string `json:"sub,omitempty"`
-//			Com           string `json:"com"`
-//			Name          string `json:"name"`
-//			Trip          string `json:"trip,omitempty"`
-//			Time          int    `json:"time"`
-//			OmittedPosts  int    `json:"omitted_posts"`
-//			OmittedImages int    `json:"omitted_images"`
-//			Replies       int    `json:"replies"`
-//			Images        int    `json:"images"`
-//			Sticky        int    `json:"sticky"`
-//			Locked        int    `json:"locked"`
-//			Cyclical      string `json:"cyclical"`
-//			LastModified  int    `json:"last_modified"`
-//			TnH           int    `json:"tn_h"`
-//			TnW           int    `json:"tn_w"`
-//			H             int    `json:"h"`
-//			W             int    `json:"w"`
-//			Fsize         int    `json:"fsize"`
-//			Filename      string `json:"filename"`
-//			Ext           string `json:"ext"`
-//			Tim           string `json:"tim"`
-//			Resto         int    `json:"resto"`
-//			Country       string `json:"country,omitempty"`
-//			CountryName   string `json:"country_name,omitempty"`
-//			Md5           string `json:"md5,omitempty"`
-//			Email         string `json:"email,omitempty"`
-//		} `json:"threads"`
-//		Page int `json:"page"`
-//	}
-//
-//	api := "https://8ch.net/"
-//	if board == "help" {
-//		ChannelMessageSendDeleteAble(s,m, "8chan usage:\n!8chan BOARD\nWhere category is one of the standard boards.")
-//		return
-//	}
-//	api += board + "/catalog.json"
-//	resp, err := http.Get(api)
-//	if err != nil {
-//		log.Fatal("Do: ", err)
-//		return
-//	}
-//	if err == nil && resp.StatusCode != http.StatusOK {
-//		log.Println("Error: " + http.StatusText(resp.StatusCode))
-//		return
-//	}
-//	defer resp.Body.Close()
-//
-//	var record Catalog
-//
-//	if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
-//		log.Println(err)
-//		s, err := ioutil.ReadAll(resp.Body)
-//		if err != nil {
-//			panic(err)
-//		}
-//		log.Println(string(s))
-//	}
-//
-//	page := record[rand.Intn(len(record)-1)]
-//	thread := page.Threads[rand.Intn(len(page.Threads)-1)]
-//	for strings.Contains(strings.ToLower(thread.Sub), "general") {
-//		page = record[rand.Intn(len(record)-1)]
-//		thread = page.Threads[rand.Intn(len(page.Threads)-1)]
-//	}
-//
-//	thread.Sub, err = html2text.FromString(strings.Replace(thread.Sub, "<wbr>", "", -1))
-//	if err != nil {
-//		log.Println(err)
-//		return
-//	}
-//	thread.Com, err = html2text.FromString(strings.Replace(thread.Com, "<wbr>", "", -1))
-//	if err != nil {
-//		log.Println(err)
-//		return
-//	}
-//	if thread.Sub != "" {
-//		thread.Sub = "*" + thread.Sub + "*" + "\n"
-//	}
-//	thread.Com = unembedURL(thread.Com)
-//
-//	//There are two different filelocations I detected on 8ch and it's unclear which is used from context.
-//	img := fmt.Sprintf("https://media.8ch.net/file_store/%s%s", thread.Tim, thread.Ext)
-//	imgresp, err := http.Get(img)
-//	if err != nil {
-//		log.Println(err)
-//		return
-//	}
-//	if imgresp.StatusCode != http.StatusOK {
-//		log.Println("Error: " + http.StatusText(imgresp.StatusCode))
-//		imgresp.Body.Close()
-//		//We'll check location two
-//		img = fmt.Sprintf("https://media.8ch.net/%s/src/%s%s", board, thread.Tim, thread.Ext)
-//		imgresp, err = http.Get(img)
-//	}
-//
-//	link := fmt.Sprintf("<https://8ch.net/%s/res/%d.html>", board, thread.No)
-//	ChannelMessageSendDeleteAble(s,m, fmt.Sprintf("%s\n%s\n\n%s", thread.Sub, thread.Com, link))
-//
-//	if err != nil {
-//		log.Println(err)
-//		return
-//	}
-//	defer imgresp.Body.Close()
-//
-//	if imgresp.StatusCode != http.StatusOK {
-//		log.Println("Failed to fetch: " + http.StatusText(imgresp.StatusCode))
-//		return
-//	}
-//
-//	s.ChannelFileSend(m.ChannelID, fmt.Sprintf("%d%s", thread.Tim, thread.Ext), imgresp.Body)
-//}
