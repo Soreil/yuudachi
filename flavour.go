@@ -41,6 +41,10 @@ func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 		ChannelMessageSendDeleteAble(s, m, "EVASIVE MANOUVRES")
 	}
 
+	if strings.Contains(strings.ToLower(m.Content), "nice") {
+		ChannelMessageSendDeleteAble(s, m, "nice")
+	}
+
 	for _, user := range m.Mentions {
 		if user.ID == botID {
 			ChannelMessageSendDeleteAble(s, m, "Thank you for the kind message, <@"+m.Author.ID+">")

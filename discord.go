@@ -36,6 +36,8 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 					randomTweet(s, m, strings.Join(tokens[2:], " "))
 				case "trends", "trend", "trending", "r":
 					trending(s, m)
+				default:
+					randomTweet(s, m, strings.Join(tokens[1:], " "))
 				}
 			}
 		case "version", "v":
@@ -89,6 +91,10 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 					radioCurrent(s, m)
 				case "q", "queue", "next":
 					radioQueue(s, m)
+				case "news":
+					hanyuuUpdate(s, m)
+				case "subscribe":
+					radioSubscribe(s, m)
 				case "search", "s":
 					if len(tokens) > 2 {
 						radioSearch(s, m, strings.Join(tokens[2:], " "))

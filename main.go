@@ -88,8 +88,7 @@ func main() {
 		log.Fatalln("error opening connection,", err)
 	}
 	log.Println("Discord opened")
-	go latestTweet()
-	//dg.AddHandlerOnce(bye)
+
 	fmt.Println("Succesfully initialized")
 	<-make(chan struct{})
 }

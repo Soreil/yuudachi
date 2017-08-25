@@ -23,9 +23,10 @@ const (
 )
 const (
 	apiRoot     = "https://a.4cdn.org"
-	chanUsage   = "4chan usage:\n!4chan BOARD\nWhere category is one of the standard boards."
+	chanUsage   = "4chan usage:\n!4chan BOARD\nWhere BOARD is one of the standard board names."
 	catalogRoot = "catalog.json"
 	bannerRoot  = "http://s.4cdn.org/image/title"
+	countryRoot = "http://s.4cdn.org/image/country"
 )
 
 // Adds <> around the links to prevent embedding
@@ -97,7 +98,7 @@ type thread struct {
 
 func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 	type Catalog []struct {
-		Page    int `json:"page"`
+		Page    int      `json:"page"`
 		Threads []thread `json:"threads"`
 	}
 
@@ -130,7 +131,7 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 	//Extract random thread from the page
 	thread := page.Threads[rand.Intn(len(page.Threads)-1)]
 	//Try and filter out general threads, this method is awfully poor
-	for strings.Contains(strings.ToLower(thread.Sub), "general") {
+	for strings.Contains(strings.ToLower(thread.Sub), "general") || thread.Sticky == 1 && thread.Replies < 10 {
 		page = record[rand.Intn(len(record)-1)]
 		thread = page.Threads[rand.Intn(len(page.Threads)-1)]
 	}
@@ -182,7 +183,7 @@ func formatThread(thread thread, board string) *discordgo.MessageEmbed {
 		Title:                            thread.Sub,
 		Color:                            yotsubaGreen,
 		Footer:                           &discordgo.MessageEmbedFooter{Text: replies},
-		Author:                           &discordgo.MessageEmbedAuthor{Name: thread.Name, IconURL: thread.Country},
+		Author:                           &discordgo.MessageEmbedAuthor{Name: thread.Name, IconURL: countryRoot + "/" + strings.ToLower(thread.Country) + ".gif"},
 		Thumbnail:                        &discordgo.MessageEmbedThumbnail{URL: banner},
 		Description:                      thread.Com,
 		Image:                            &discordgo.MessageEmbedImage{URL: img, Width: thread.W, Height: thread.H}}

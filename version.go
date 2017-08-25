@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-const appVersion = `21-7-2017
-*4chan embeds*`
+const appVersion = `24-8-2017
+"Basic Hanyuu Twitter status account replication."`
 const useFiglet = false
 
 func figlet(s string) (string, error) {

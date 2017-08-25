@@ -8,7 +8,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"reflect"
 	"strings"
 	"time"
 )
@@ -18,21 +17,20 @@ type twitterWrapper struct {
 	Raw *http.Client
 }
 
+const hanyuuDisplayName string = "Hanyuu_status"
 var twitterClient twitterWrapper
 
-func latestTweet() {
-	p := twitter.StreamFilterParams{Follow: []string{`@Hanyuu_status`}}
-	stream, err := twitterClient.Streams.Filter(&p)
+func latestTweet() string {
+	user, resp, err := twitterClient.Users.Show(&twitter.UserShowParams{
+		ScreenName: hanyuuDisplayName,
+	})
 	if err != nil {
-		log.Println("Failed to connect to Twitter Streaming API", p)
-		return
+		panic(err)
 	}
-	for msg := range stream.Messages {
-		fmt.Println("Trying to figure out the type of a Twitter API response")
-		fmt.Println(msg)
-		fmt.Println(reflect.TypeOf(msg))
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalln(resp.Status)
 	}
-	defer stream.Stop()
+	return user.Status.Text
 }
 
 func randomTweet(s *discordgo.Session, m *discordgo.MessageCreate, query string) {
@@ -50,6 +48,12 @@ func randomTweet(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 		t = *t.RetweetedStatus
 	}
 
+	if _, err := ChannelMessageSendEmbedDeleteAble(s, m, tweetToEmbed(t)); err != nil {
+		log.Println(err)
+	}
+}
+
+func tweetToEmbed(t twitter.Tweet) *discordgo.MessageEmbed {
 	img := &discordgo.MessageEmbedImage{}
 	thumb := &discordgo.MessageEmbedThumbnail{}
 
@@ -63,16 +67,15 @@ func randomTweet(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 
 	tim, err := time.Parse(time.RubyDate, t.CreatedAt)
 	if err != nil {
-		log.Printf("Failed to parse twitter time: %s", err.Error())
-		return
+		log.Println("Failed to parse twitter time:", err.Error())
+		return nil
 	}
 	embed := &discordgo.MessageEmbed{URL: "https://twitter.com/statuses/" + t.IDStr,
 		Title:                            t.User.Name, Type: "rich", Timestamp: tim.Format(time.RFC3339Nano), Footer: &discordgo.MessageEmbedFooter{Text: fmt.Sprintf("Reweets: %d\tLikes: %d", t.RetweetCount, t.FavoriteCount)},
 		Image:                            img, Thumbnail: thumb, Description: t.Text}
 	embed.Fields = append(embed.Fields)
-	if _, err := ChannelMessageSendEmbedDeleteAble(s, m, embed); err != nil {
-		log.Println(err)
-	}
+
+	return embed
 }
 
 func trending(s *discordgo.Session, m *discordgo.MessageCreate) {
