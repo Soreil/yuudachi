@@ -7,8 +7,10 @@ import (
 	"strings"
 )
 
-const appVersion = `24-8-2017
-"Basic Hanyuu Twitter status account replication."`
+const appVersion = `4-9-2017
+"Dog image support.
+Very nice feature, very nice filename. Thank dog@dog.ceo!"`
+
 const useFiglet = false
 
 func figlet(s string) (string, error) {
