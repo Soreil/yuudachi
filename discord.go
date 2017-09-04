@@ -42,6 +42,8 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		case "version", "v":
 			version(s, m)
+		case "dog", "doggo", "goodboy":
+			randomDogImage(s, m)
 		case "fortune", "f":
 			if len(tokens) > 1 {
 				//Only want one word since that's all the API can take.
