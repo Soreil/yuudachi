@@ -7,9 +7,9 @@ import (
 	"strings"
 )
 
-const appVersion = `4-9-2017
-"Dog image support.
-Very nice feature, very nice filename. Thank dog@dog.ceo!"`
+const appVersion = `6-9-2017
+"Added support for moon phase lookup.
+8 phases are supported, the odd phases are interpolated and might be wrong."`
 
 const useFiglet = false
 

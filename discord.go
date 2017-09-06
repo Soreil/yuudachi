@@ -26,6 +26,8 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 		switch strings.ToLower(tokens[0]) {
+		case "moon", "moonphase":
+			moonPhase(s, m)
 		case "delete", "delet":
 			ChannelMessageDelete(s, m)
 		case "twitter", "t":
