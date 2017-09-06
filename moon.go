@@ -81,17 +81,6 @@ func closestPhase(response MoonResponse) rune {
 	var lastTime time.Time
 	var lastPhase string
 	for _, phase := range response.Phasedata {
-		//tdate, err := time.Parse("", phase.Date)
-		//if err != nil {
-		//	panic(err)
-		//}
-		//thours, err := time.Parse("", phase.Time)
-		//if err != nil {
-		//	panic(err)
-		//}
-		//
-		//phaseTime := tdate.Add(time.Duration(thours.Nanosecond()))
-
 		phaseTime, err := time.Parse(americanTime, phase.Date+" "+phase.Time)
 		if err != nil {
 			panic(err)
