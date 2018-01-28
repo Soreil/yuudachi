@@ -13,11 +13,6 @@ import (
 	"github.com/dghubble/oauth1"
 )
 
-//Twitter timestamp format: "Wed Aug 27 13:08:45 +0000 2008" (time.RubyDate)
-//Discord timestamp format: "2016-03-24T23:15:59.605000+00:00" (RFC3339 (nano) but using a '+/-' (time-numoffset))
-const RFC3339Discord = "2016-04-04T20:05:59.605500+00:00"
-
-// Variables used for command line parameters
 var (
 	botID   string
 	botName string
@@ -40,7 +35,6 @@ func main() {
 	printVersion := flags.Bool("v", false, "Display current version")
 	flags.Parse(os.Args[1:])
 
-	//TODO(Sjon): Give this a proper place.
 	if *printVersion {
 		fmt.Println(appVersion)
 		os.Exit(0)
@@ -89,6 +83,6 @@ func main() {
 	}
 	log.Println("Discord opened")
 
-	fmt.Println("Succesfully initialized")
+	fmt.Println("Succesfully initialized",botName)
 	<-make(chan struct{})
 }

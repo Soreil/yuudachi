@@ -26,7 +26,7 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 		switch strings.ToLower(tokens[0]) {
-		case "moon", "moonphase":
+		case "moon", "moonphase", "phase":
 			moonPhase(s, m)
 		case "delete", "delet":
 			ChannelMessageDelete(s, m)
@@ -58,7 +58,7 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if len(tokens) > 1 {
 				//Only want one word since that's all the API can take.
 				switch strings.Trim(tokens[1], `\/`) {
-				case "cm", "y", "gif", "e", "h", "hc", "b", "mlp", "lgbt", "soc", "s", "hm", "d", "t", "aco", "r", "pol":
+				case "cm", "y", "gif", "e", "h", "hc", "b", "mlp", "lgbt", "soc", "s", "hm", "d", "t", "aco", "r", "pol", "trash":
 					ChannelMessageSendDeleteAble(s, m, "I am a Christian bot, please don't make me blacklist you.\nFor now consider one of the following books instead for your reading pleasure.")
 					bibleBooks(s, m)
 					return

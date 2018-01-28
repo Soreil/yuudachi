@@ -21,6 +21,7 @@ const (
 	pngBanners = 262
 	jpgBanners = 224
 )
+
 const (
 	apiRoot     = "https://a.4cdn.org"
 	chanUsage   = "4chan usage:\n!4chan BOARD\nWhere BOARD is one of the standard board names."
