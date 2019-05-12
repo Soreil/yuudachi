@@ -32,6 +32,9 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			ChannelMessageDelete(s, m)
 		case "twitter", "t":
 			if len(tokens) > 1 {
+				embedImages(s, m, tokens[1])
+				
+				/*
 				switch tokens[1] {
 				case "tweet", "search", "random", "s":
 					//Reuses the whole message
@@ -40,6 +43,7 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 					trending(s, m)
 				default:
 					randomTweet(s, m, strings.Join(tokens[1:], " "))
+*/
 				}
 			}
 		case "version", "v":

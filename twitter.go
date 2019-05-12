@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"strconv"
 )
 
 type twitterWrapper struct {
@@ -32,6 +33,46 @@ func latestTweet() string {
 	}
 	return user.Status.Text
 }
+
+
+
+// Attempts to grab images not embedded by discord and post them 
+func embedImages(s *discordgo.Session, m *discordgo.MessageCreate, link string) void {
+	// Parse URL for it's ID	
+	pos := strings.Index(link, "/status/")
+	if pos != -1 {                           // If the link is valid, it will find status and return not -1
+		pos += len("/status/")
+		IDString := link[pos:len(link)]        // slice off the URL stuff
+		IDString = strings.TrimSuffix(ID, "/") // Attempt to slice off a possible if it exists /
+		ID = strconv.Atoi(IDString)
+
+		// Pass the tweet ID to show, get tweet
+		// https://godoc.org/github.com/dghubble/go-twitter/twitter#StatusService.Show
+		statusShowParams := &twitter.StatusShowParams{}
+		tweet, resp, err := twitterClient.Show(ID, statsShowParams)
+		if err != nil {
+			panic(err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			log.Fatalln(resp.Status)
+		}
+		// Check if it has more than one image
+		imageCount := 0
+		msgResp := ""
+		for index, elem := range tweet.Entities.Media {
+			if elem.Type == "photo"
+			imageCount++
+			if index != 0 {    // If it's the first image, don't repost it 
+				msgResp += elem.MediaURL+'\n'
+			}
+		}
+		// If so, post them!
+		if imgCount > 1 {
+			ChannelMessageSendDeleteAble(s, m, msgResp)
+		}		
+	}
+}
+
 
 func randomTweet(s *discordgo.Session, m *discordgo.MessageCreate, query string) {
 	search, _, err := twitterClient.Search.Tweets(&twitter.SearchTweetParams{Query: query})
