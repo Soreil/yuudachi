@@ -3,13 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"github.com/dghubble/go-twitter/twitter"
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/dghubble/go-twitter/twitter"
 )
 
 type twitterWrapper struct {
@@ -18,6 +20,7 @@ type twitterWrapper struct {
 }
 
 const hanyuuDisplayName string = "Hanyuu_status"
+
 var twitterClient twitterWrapper
 
 func latestTweet() string {
@@ -31,6 +34,49 @@ func latestTweet() string {
 		log.Fatalln(resp.Status)
 	}
 	return user.Status.Text
+}
+
+// Attempts to grab images not embedded by discord and post them
+func embedImages(s *discordgo.Session, m *discordgo.MessageCreate, link string) {
+	// Parse URL for it's ID
+	pos := strings.Index(link, "/status/")
+	if pos != -1 { // If the link is valid, it will find status and return not -1
+		pos += len("/status/")
+		IDString := link[pos:len(link)]              // slice off the URL stuff
+		IDString = strings.TrimSuffix(IDString, "/") // Attempt to slice off a possible if it exists /
+		ID, err := strconv.ParseInt(IDString, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		// Pass the tweet ID to show, get tweet
+		// https://godoc.org/github.com/dghubble/go-twitter/twitter#StatusService.Show
+		statusShowParams := twitter.StatusShowParams{}
+		tweet, resp, err := twitterClient.Statuses.Show(ID, &statusShowParams)
+		if err != nil {
+			panic(err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			log.Fatalln(resp.Status)
+		}
+		// Check if it has more than one image
+		imageCount := 0
+		msgResp := ""
+		for index, elem := range tweet.ExtendedEntities.Media {
+			if elem.Type == "photo" {
+				imageCount = imageCount + 1
+			}
+			if index != 0 { // If it's the first image, don't repost it
+				msgResp += elem.MediaURL + "\n"
+			}
+		}
+		// If so, post them!
+		if imageCount > 1 {
+			ChannelMessageSendDeleteAble(s, m, msgResp)
+			return
+		}
+		log.Printf("%+v\n", tweet)
+	}
 }
 
 func randomTweet(s *discordgo.Session, m *discordgo.MessageCreate, query string) {
@@ -71,8 +117,8 @@ func tweetToEmbed(t twitter.Tweet) *discordgo.MessageEmbed {
 		return nil
 	}
 	embed := &discordgo.MessageEmbed{URL: "https://twitter.com/statuses/" + t.IDStr,
-		Title:                            t.User.Name, Type: "rich", Timestamp: tim.Format(time.RFC3339Nano), Footer: &discordgo.MessageEmbedFooter{Text: fmt.Sprintf("Reweets: %d\tLikes: %d", t.RetweetCount, t.FavoriteCount)},
-		Image:                            img, Thumbnail: thumb, Description: t.Text}
+		Title: t.User.Name, Type: "rich", Timestamp: tim.Format(time.RFC3339Nano), Footer: &discordgo.MessageEmbedFooter{Text: fmt.Sprintf("Reweets: %d\tLikes: %d", t.RetweetCount, t.FavoriteCount)},
+		Image: img, Thumbnail: thumb, Description: t.Text}
 	embed.Fields = append(embed.Fields)
 
 	return embed

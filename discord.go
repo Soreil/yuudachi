@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
 	"strconv"
 	"strings"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 func command(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -30,20 +31,12 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			moonPhase(s, m)
 		case "delete", "delet":
 			ChannelMessageDelete(s, m)
-		case "twitter", "t":
-			if len(tokens) > 1 {
-				switch tokens[1] {
-				case "tweet", "search", "random", "s":
-					//Reuses the whole message
-					randomTweet(s, m, strings.Join(tokens[2:], " "))
-				case "trends", "trend", "trending", "r":
-					trending(s, m)
-				default:
-					randomTweet(s, m, strings.Join(tokens[1:], " "))
-				}
-			}
 		case "version", "v":
 			version(s, m)
+		case "twitter":
+			if len(tokens) > 1 {
+				embedImages(s, m, tokens[1])
+			}
 		case "dog", "doggo", "goodboy":
 			randomDogImage(s, m)
 		case "fortune", "f":

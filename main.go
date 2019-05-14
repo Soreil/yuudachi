@@ -18,7 +18,7 @@ var (
 	botName string
 )
 
-const userAgent = "Yuudachi/0.1"
+const userAgent = "Yuudachi/0.2"
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -32,6 +32,7 @@ func main() {
 	twitterAccessSecret := flags.String("access-secret", "", "Twitter Access Secret")
 	discordBotToken := flags.String("token", "", "Discord Bot Token")
 	bibleAccessToken := flags.String("bible", "", "Bible search token")
+	fixerAPIToken = *flags.String("fixer", "", "Fixer currency token")
 	printVersion := flags.Bool("v", false, "Display current version")
 	flags.Parse(os.Args[1:])
 
@@ -75,7 +76,6 @@ func main() {
 	//here we add the functions
 	dg.AddHandler(personality)
 	dg.AddHandler(command)
-	dg.AddHandler(tatsumaki)
 	log.Println("Handlers added")
 
 	if err := dg.Open(); err != nil {
@@ -83,6 +83,6 @@ func main() {
 	}
 	log.Println("Discord opened")
 
-	fmt.Println("Succesfully initialized",botName)
+	fmt.Println("Succesfully initialized", botName)
 	<-make(chan struct{})
 }

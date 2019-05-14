@@ -10,9 +10,6 @@ import (
 func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	if m.Author.Bot || m.Author.Username == "Liru" {
-		if m.Author.Username == "Liru" && strings.Contains(strings.ToLower(m.Content), "awooo") {
-			ChannelMessageSendDeleteAble(s, m, "No shouting Liru!")
-		}
 		return
 	}
 
@@ -20,10 +17,6 @@ func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 	pois := strings.Fields(strings.ToLower(m.Content))
 	for _, word := range pois {
 		if word == "poi" {
-			_, err := ChannelMessageSendDeleteAble(s, m, "Poi!")
-			if err != nil {
-				log.Println(err)
-			}
 			ch, _ := s.Channel(m.ChannelID)
 			gu, _ := s.Guild(ch.GuildID)
 			for _, emoji := range gu.Emojis {
@@ -35,14 +28,6 @@ func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 			return
 		}
-	}
-
-	if strings.Contains(strings.ToLower(m.Content), "kill "+strings.ToLower(botName)) {
-		ChannelMessageSendDeleteAble(s, m, "EVASIVE MANOUVRES")
-	}
-
-	if strings.Contains(strings.ToLower(m.Content), "nice") {
-		ChannelMessageSendDeleteAble(s, m, "nice")
 	}
 
 	for _, user := range m.Mentions {

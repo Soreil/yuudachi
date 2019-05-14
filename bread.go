@@ -10,11 +10,11 @@ import (
 	"net/http"
 	"strconv"
 )
-
+var fixerAPIToken string
 const breadBase = "RON"
 const breadRatio = 1.0
 
-const currencyAPI = `https://api.fixer.io/latest?base=` + breadBase
+var currencyAPI = `https://data.fixer.io/api/latest?access_key=`+ fixerAPIToken + `?base=` + breadBase
 
 type Currency struct {
 	Base  string                 `json:"base"`

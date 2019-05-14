@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/Soreil/strip"
 	"github.com/bwmarrin/discordgo"
 	"log"
 	"math/rand"
@@ -312,8 +311,5 @@ func clean(html string) string {
 		}
 	}
 
-	html = strip.StripTags(html)
-	//DAS RITE
-	html = strings.Replace(html, `LORD`, "__**LORD**__", -1)
 	return html
 }
