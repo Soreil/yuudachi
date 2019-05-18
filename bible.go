@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/bwmarrin/discordgo"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
 	"unicode"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 var bibleToken string
@@ -16,6 +17,7 @@ var bibleToken string
 const bibleVersion = `eng-KJV`
 const bibleURL = `https://bibles.org/v2`
 
+//BibleBooks is a JSON to struct mapping for the bibles.org v2 API
 type BibleBooks struct {
 	Response struct {
 		Books []struct {
@@ -110,6 +112,7 @@ func bibleBooks(s *discordgo.Session, m *discordgo.MessageCreate) {
 	ChannelMessageSendDeleteAble(s, m, strings.Join(msg, "\n"))
 }
 
+//BibleSearch is a JSON to struct mapping
 type BibleSearch struct {
 	Response struct {
 		Search struct {
@@ -220,7 +223,6 @@ func bibleSearch(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		//Invalid JSON
 		panic(err)
-		return
 	}
 	//s.ChannelMessageSend(m.ChannelID,result.Response.Search.Result.Summary.Query)
 	if result.Response.Search.Result.Type == "passages" {

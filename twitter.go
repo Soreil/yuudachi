@@ -46,7 +46,7 @@ func embedImages(s *discordgo.Session, m *discordgo.MessageCreate, link string) 
 		IDString = strings.TrimSuffix(IDString, "/") // Attempt to slice off a possible if it exists /
 		ID, err := strconv.ParseInt(IDString, 10, 64)
 		if err != nil {
-			panic(err)
+			log.Println(err)
 		}
 
 		// Pass the tweet ID to show, get tweet
@@ -54,14 +54,18 @@ func embedImages(s *discordgo.Session, m *discordgo.MessageCreate, link string) 
 		statusShowParams := twitter.StatusShowParams{}
 		tweet, resp, err := twitterClient.Statuses.Show(ID, &statusShowParams)
 		if err != nil {
-			panic(err)
+			log.Println(err)
 		}
 		if resp.StatusCode != http.StatusOK {
-			log.Fatalln(resp.Status)
+			log.Println(resp.Status)
 		}
 		// Check if it has more than one image
 		imageCount := 0
 		msgResp := ""
+		if tweet.ExtendedEntities.Media == nil {
+			log.Println("Failed to read image data from tweet")
+			return
+		}
 		for index, elem := range tweet.ExtendedEntities.Media {
 			if elem.Type == "photo" {
 				imageCount = imageCount + 1
@@ -75,7 +79,6 @@ func embedImages(s *discordgo.Session, m *discordgo.MessageCreate, link string) 
 			ChannelMessageSendDeleteAble(s, m, msgResp)
 			return
 		}
-		log.Printf("%+v\n", tweet)
 	}
 }
 

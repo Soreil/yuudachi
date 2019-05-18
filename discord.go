@@ -61,9 +61,11 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 				ChannelMessageSendDeleteAble(s, m, "Provide a board please!")
 			}
 		case "bible":
-			if len(tokens) > 1 {
-				bibleSearch(s, m, strings.Join(tokens[1:], " "))
-			}
+			ChannelMessageSendDeleteAble(s, m, "Sorry, the bible is not available digitally today :(")
+			return
+			//if len(tokens) > 1 {
+			//	bibleSearch(s, m, strings.Join(tokens[1:], " "))
+			//}
 		case "breads", "bread", ":bread:", "🍞":
 			if len(tokens) == 3 {
 				n, err := strconv.ParseFloat(tokens[1], 64)
