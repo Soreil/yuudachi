@@ -11,11 +11,23 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
+	"github.com/vharitonsky/iniflags"
 )
 
 var (
 	botID   string
 	botName string
+)
+
+var (
+	twitterConsumerKey    = flag.String("consumer-key", "", "Twitter Consumer Key")
+	twitterConsumerSecret = flag.String("consumer-secret", "", "Twitter Consumer Secret")
+	twitterAccessToken    = flag.String("access-token", "", "Twitter Access Token")
+	twitterAccessSecret   = flag.String("access-secret", "", "Twitter Access Secret")
+	discordBotToken       = flag.String("token", "", "Discord Bot Token")
+	bibleAccessToken      = flag.String("bible", "", "Bible search token")
+	fixerAPIToken         = flag.String("fixer", "", "Fixer currency token")
+	printVersion          = flag.Bool("v", false, "Display current version")
 )
 
 const userAgent = "Yuudachi/0.2"
@@ -25,16 +37,7 @@ func init() {
 }
 
 func main() {
-	flags := flag.NewFlagSet("user-auth", flag.ExitOnError)
-	twitterConsumerKey := flags.String("consumer-key", "", "Twitter Consumer Key")
-	twitterConsumerSecret := flags.String("consumer-secret", "", "Twitter Consumer Secret")
-	twitterAccessToken := flags.String("access-token", "", "Twitter Access Token")
-	twitterAccessSecret := flags.String("access-secret", "", "Twitter Access Secret")
-	discordBotToken := flags.String("token", "", "Discord Bot Token")
-	bibleAccessToken := flags.String("bible", "", "Bible search token")
-	fixerAPIToken = *flags.String("fixer", "", "Fixer currency token")
-	printVersion := flags.Bool("v", false, "Display current version")
-	flags.Parse(os.Args[1:])
+	iniflags.Parse()
 
 	if *printVersion {
 		fmt.Println(appVersion)

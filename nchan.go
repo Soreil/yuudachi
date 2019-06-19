@@ -3,13 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"github.com/jaytaylor/html2text"
 	"log"
 	"math/rand"
 	"net/http"
 	"strings"
 	"unicode"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/jaytaylor/html2text"
 )
 
 const (
@@ -74,7 +75,7 @@ type thread struct {
 	Imagelimit    int    `json:"imagelimit,omitempty"`
 	OmittedPosts  int    `json:"omitted_posts,omitempty"`
 	OmittedImages int    `json:"omitted_images,omitempty"`
-	LastReplies []struct {
+	LastReplies   []struct {
 		No          int    `json:"no"`
 		Now         string `json:"now"`
 		Name        string `json:"name"`
@@ -180,14 +181,22 @@ func formatThread(thread thread, board string) *discordgo.MessageEmbed {
 		replies = fmt.Sprintf("There are %d replies.", thread.Replies)
 	}
 
+	var title string
+
+	if thread.Sub == "" {
+		title = "link"
+	} else {
+		title = thread.Sub
+	}
+
 	embed := &discordgo.MessageEmbed{URL: link,
-		Title:                            thread.Sub,
-		Color:                            yotsubaGreen,
-		Footer:                           &discordgo.MessageEmbedFooter{Text: replies},
-		Author:                           &discordgo.MessageEmbedAuthor{Name: thread.Name, IconURL: countryRoot + "/" + strings.ToLower(thread.Country) + ".gif"},
-		Thumbnail:                        &discordgo.MessageEmbedThumbnail{URL: banner},
-		Description:                      thread.Com,
-		Image:                            &discordgo.MessageEmbedImage{URL: img, Width: thread.W, Height: thread.H}}
+		Title:       title,
+		Color:       yotsubaGreen,
+		Footer:      &discordgo.MessageEmbedFooter{Text: replies},
+		Author:      &discordgo.MessageEmbedAuthor{Name: thread.Name, IconURL: countryRoot + "/" + strings.ToLower(thread.Country) + ".gif"},
+		Thumbnail:   &discordgo.MessageEmbedThumbnail{URL: banner},
+		Description: thread.Com,
+		Image:       &discordgo.MessageEmbedImage{URL: img, Width: thread.W, Height: thread.H}}
 
 	return embed
 }
