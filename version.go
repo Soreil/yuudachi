@@ -11,10 +11,10 @@ const appVersion = `14-5-2019
 
 func version(s *discordgo.Session, m *discordgo.MessageCreate) {
 	msg := "Current version: " + appVersion
-	ChannelMessageSendDeleteAble(s, m, msg)
+	channelMessageSendDeleteAble(s, m, msg)
 }
 
 func usage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	usage := strings.Join([]string{"twitter", "version", "fortune", "4chan", "bible", "radio", "bird"}, ", ")
-	ChannelMessageSendDeleteAble(s, m, "The possible commands Yuudachi will like: "+usage+".")
+	channelMessageSendDeleteAble(s, m, "The possible commands Yuudachi will like: "+usage+".")
 }

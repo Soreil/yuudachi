@@ -76,7 +76,7 @@ func embedImages(s *discordgo.Session, m *discordgo.MessageCreate, link string) 
 		}
 		// If so, post them!
 		if imageCount > 1 {
-			ChannelMessageSendDeleteAble(s, m, msgResp)
+			channelMessageSendDeleteAble(s, m, msgResp)
 			return
 		}
 	}
@@ -89,7 +89,7 @@ func randomTweet(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 		return
 	}
 	if len(search.Statuses) == 0 {
-		ChannelMessageSendDeleteAble(s, m, "Sadly there were no results for: "+query+" on twitter.")
+		channelMessageSendDeleteAble(s, m, "Sadly there were no results for: "+query+" on twitter.")
 		return
 	}
 	t := search.Statuses[rand.Intn(len(search.Statuses)-1)]
@@ -97,7 +97,7 @@ func randomTweet(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 		t = *t.RetweetedStatus
 	}
 
-	if _, err := ChannelMessageSendEmbedDeleteAble(s, m, tweetToEmbed(t)); err != nil {
+	if _, err := channelMessageSendEmbedDeleteAble(s, m, tweetToEmbed(t)); err != nil {
 		log.Println(err)
 	}
 }
@@ -164,5 +164,5 @@ func trending(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		}
 	}
-	ChannelMessageSendDeleteAble(s, m, strings.Join(out, "\n"))
+	channelMessageSendDeleteAble(s, m, strings.Join(out, "\n"))
 }

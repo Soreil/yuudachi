@@ -13,7 +13,7 @@ func fortune(s *discordgo.Session, m *discordgo.MessageCreate, category string) 
 	}
 	u := "http://www.yerkee.com/api/fortune"
 	if category == "help" {
-		ChannelMessageSendDeleteAble(s, m, "Fortune usage:\n!fortune CATEGORY\nWhere category is one of: computers, cookie, definitions, miscellaneous, people, platitudes, politics, science, wisdom\nIf no category is given a random one is chosen.")
+		channelMessageSendDeleteAble(s, m, "Fortune usage:\n!fortune CATEGORY\nWhere category is one of: computers, cookie, definitions, miscellaneous, people, platitudes, politics, science, wisdom\nIf no category is given a random one is chosen.")
 		return
 	}
 	switch category {
@@ -21,7 +21,7 @@ func fortune(s *discordgo.Session, m *discordgo.MessageCreate, category string) 
 		u += "/" + category
 	case "":
 	default:
-		ChannelMessageSendDeleteAble(s, m, "Unknown category, type \"!fortune help\" for a list of categories allowed.")
+		channelMessageSendDeleteAble(s, m, "Unknown category, type \"!fortune help\" for a list of categories allowed.")
 		return
 	}
 	resp, err := http.Get(u)
@@ -38,7 +38,7 @@ func fortune(s *discordgo.Session, m *discordgo.MessageCreate, category string) 
 
 	//Didn't get a fortune
 	if record.Fortune != "" {
-		ChannelMessageSendDeleteAble(s, m, record.Fortune)
+		channelMessageSendDeleteAble(s, m, record.Fortune)
 	} else {
 		log.Println("Failed to get a fortune.")
 	}

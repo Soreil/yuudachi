@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 type moonPhaseName string
@@ -60,6 +61,7 @@ func (p moonPhaseName) Rune() rune {
 
 const lunarMonthLength = time.Hour * 24 * 28 //28 days is a wild guess, easily divided by 4
 
+//MoonResponse maps the API response to a Go struct
 type MoonResponse struct {
 	Error       bool   `json:"error"`
 	Apiversion  string `json:"apiversion"`
@@ -107,26 +109,22 @@ func closestPhase(response MoonResponse) rune {
 				//We actually want the "half"-phase after lastPhase
 				if p := moonPhaseName(lastPhase).Rune(); p == waningCrescentMoonRune { //handling wrap around
 					return newMoonRune
-				} else {
-					return moonPhaseName(lastPhase).Rune() + 1
 				}
-			} else {
-				//lastPhase was correct
-				return moonPhaseName(lastPhase).Rune()
+				return moonPhaseName(lastPhase).Rune() + 1
 			}
-		} else {
-			if timeUntilNextPhase.Nanoseconds() < difference.Nanoseconds()/2 {
-				//We actually want the "half"-phase before phaseTime
-				if p := moonPhaseName(phase.Phase).Rune(); p == newMoonRune { //handling wrap around
-					return waningCrescentMoonRune
-				} else {
-					return moonPhaseName(phase.Phase).Rune() - 1
-				}
-			} else {
-				//nextPhase was correct
-				return moonPhaseName(phase.Phase).Rune()
-			}
+			//lastPhase was correct
+			return moonPhaseName(lastPhase).Rune()
+
 		}
+		if timeUntilNextPhase.Nanoseconds() < difference.Nanoseconds()/2 {
+			//We actually want the "half"-phase before phaseTime
+			if p := moonPhaseName(phase.Phase).Rune(); p == newMoonRune { //handling wrap around
+				return waningCrescentMoonRune
+			}
+			return moonPhaseName(phase.Phase).Rune() - 1
+		}
+		//nextPhase was correct
+		return moonPhaseName(phase.Phase).Rune()
 	}
 	return ' '
 }
@@ -139,7 +137,7 @@ func getMoonPhase() (moon rune, err error) {
 
 	req, err := http.NewRequest("GET", url+options, nil) //TODO(sjon): Figure out what is wrong with setting the header options.
 	if err != nil {
-		panic(err)
+		return moon, err
 	}
 
 	//req.Header.Add("year", strconv.Itoa(year))
@@ -174,8 +172,8 @@ func moonPhase(s *discordgo.Session, m *discordgo.MessageCreate) {
 	moon, err := getMoonPhase()
 	if err != nil {
 		log.Println(err)
-		ChannelMessageSendDeleteAble(s, m, "Sorry, I failed to inspect the moon.")
+		channelMessageSendDeleteAble(s, m, "Sorry, I failed to inspect the moon.")
 		return
 	}
-	ChannelMessageSendDeleteAble(s, m, string(moon))
+	channelMessageSendDeleteAble(s, m, string(moon))
 }

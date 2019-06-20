@@ -83,7 +83,7 @@ func bibleBooks(s *discordgo.Session, m *discordgo.MessageCreate) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		log.Println("Error:", http.StatusText(resp.StatusCode))
-		ChannelMessageSendDeleteAble(s, m, "Sorry, we could not fetch the bible books at this moment.")
+		channelMessageSendDeleteAble(s, m, "Sorry, we could not fetch the bible books at this moment.")
 		return
 	}
 	var books BibleBooks
@@ -93,7 +93,7 @@ func bibleBooks(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	if len(books.Response.Books) <= 0 {
 		log.Println("We failed to get any books")
-		ChannelMessageSendDeleteAble(s, m, "Sorry, we could not fetch the bible books at this moment.")
+		channelMessageSendDeleteAble(s, m, "Sorry, we could not fetch the bible books at this moment.")
 		return
 	}
 
@@ -109,7 +109,7 @@ func bibleBooks(s *discordgo.Session, m *discordgo.MessageCreate) {
 	//copyright = strings.Replace(copyright, `</p>`, "*", -1)
 	//msg = append(msg, copyright)
 
-	ChannelMessageSendDeleteAble(s, m, strings.Join(msg, "\n"))
+	channelMessageSendDeleteAble(s, m, strings.Join(msg, "\n"))
 }
 
 //BibleSearch is a JSON to struct mapping
@@ -210,13 +210,13 @@ func bibleSearch(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 
 	if resp.StatusCode != http.StatusOK {
 		log.Println("Error:", http.StatusText(resp.StatusCode))
-		ChannelMessageSendDeleteAble(s, m, "Sorry, we could not fetch the bible books at this moment.")
+		channelMessageSendDeleteAble(s, m, "Sorry, we could not fetch the bible books at this moment.")
 		return
 	}
 	if resp.StatusCode == http.StatusNotFound {
-		ChannelMessageSendDeleteAble(s, m, query+":"+http.StatusText(http.StatusNotFound))
+		channelMessageSendDeleteAble(s, m, query+":"+http.StatusText(http.StatusNotFound))
 		log.Println(req.URL)
-		ChannelMessageSendDeleteAble(s, m, "Sorry, we could not fetch the bible books at this moment.")
+		channelMessageSendDeleteAble(s, m, "Sorry, we could not fetch the bible books at this moment.")
 		return
 	}
 	var result BibleSearch
@@ -228,7 +228,7 @@ func bibleSearch(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 	if result.Response.Search.Result.Type == "passages" {
 		log.Println(result.Response.Search.Result)
 		if result.Response.Search.Result.Passages == nil || len(result.Response.Search.Result.Passages) <= 0 {
-			ChannelMessageSendDeleteAble(s, m, query+":"+http.StatusText(http.StatusNotFound))
+			channelMessageSendDeleteAble(s, m, query+":"+http.StatusText(http.StatusNotFound))
 			return
 		}
 		passage := result.Response.Search.Result.Passages[rand.Intn(len(result.Response.Search.Result.Passages))].Text
@@ -237,7 +237,7 @@ func bibleSearch(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 
 		lines := strings.Split(passage, "\n")
 		for _, line := range lines {
-			_, err = ChannelMessageSendDeleteAble(s, m, line)
+			_, err = channelMessageSendDeleteAble(s, m, line)
 			if err != nil {
 				log.Println(err)
 			}
@@ -247,14 +247,14 @@ func bibleSearch(s *discordgo.Session, m *discordgo.MessageCreate, query string)
 	if result.Response.Search.Result.Type == "verses" {
 		log.Println(result.Response.Search.Result)
 		if result.Response.Search.Result.Verses == nil || len(result.Response.Search.Result.Verses) <= 0 {
-			ChannelMessageSendDeleteAble(s, m, query+":"+http.StatusText(http.StatusNotFound))
+			channelMessageSendDeleteAble(s, m, query+":"+http.StatusText(http.StatusNotFound))
 			return
 		}
 		verse := result.Response.Search.Result.Verses[rand.Intn(len(result.Response.Search.Result.Verses))].Text
 		verse = clean(verse)
 		log.Println(verse)
 
-		_, err = ChannelMessageSendDeleteAble(s, m, verse)
+		_, err = channelMessageSendDeleteAble(s, m, verse)
 		if err != nil {
 			log.Println(err)
 		}

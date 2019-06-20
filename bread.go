@@ -17,6 +17,7 @@ const breadRatio = 1.0
 
 var currencyAPI = `https://data.fixer.io/api/latest?access_key=` + *fixerAPIToken + `?base=` + breadBase
 
+//Currency maps to the fixer API
 type Currency struct {
 	Base  string                 `json:"base"`
 	Date  string                 `json:"date"`
@@ -64,17 +65,17 @@ func fromBreads(amount float64, currency string) (float64, error) {
 func breads(s *discordgo.Session, m *discordgo.MessageCreate, amount float64, currency string) {
 	b, err := inBreads(amount, currency)
 	if err != nil {
-		ChannelMessageSendDeleteAble(s, m, err.Error())
+		channelMessageSendDeleteAble(s, m, err.Error())
 	} else {
-		ChannelMessageSendDeleteAble(s, m, "That's "+strconv.Itoa(int(b))+" breads and "+strconv.Itoa(int((b-math.Trunc(b))*20))+" slices.")
+		channelMessageSendDeleteAble(s, m, "That's "+strconv.Itoa(int(b))+" breads and "+strconv.Itoa(int((b-math.Trunc(b))*20))+" slices.")
 	}
 }
 
 func fiats(s *discordgo.Session, m *discordgo.MessageCreate, amount float64, currency string) {
 	b, err := fromBreads(amount, currency)
 	if err != nil {
-		ChannelMessageSendDeleteAble(s, m, err.Error())
+		channelMessageSendDeleteAble(s, m, err.Error())
 	} else {
-		ChannelMessageSendDeleteAble(s, m, fmt.Sprintf("That's %02.2f %s.", b, currency))
+		channelMessageSendDeleteAble(s, m, fmt.Sprintf("That's %02.2f %s.", b, currency))
 	}
 }

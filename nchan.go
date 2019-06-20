@@ -106,7 +106,7 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 
 	//TODO(sjon): Implement this in a cleaner manner.
 	if board == "help" {
-		ChannelMessageSendDeleteAble(s, m, chanUsage)
+		channelMessageSendDeleteAble(s, m, chanUsage)
 		return
 	}
 
@@ -152,7 +152,7 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 	}
 
 	reply := formatThread(thread, board)
-	if _, err := ChannelMessageSendEmbedDeleteAble(s, m, reply); err != nil {
+	if _, err := channelMessageSendEmbedDeleteAble(s, m, reply); err != nil {
 		log.Println(err)
 	}
 }

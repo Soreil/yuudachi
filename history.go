@@ -42,7 +42,7 @@ func mostRecentPost(s *discordgo.Session, m *discordgo.MessageCreate) *discordgo
 func ChannelMessageDeleteMostRecent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	recent := mostRecentPost(s, m)
 	if recent == nil {
-		ChannelMessageSendDeleteAble(s, m, "No messages to delete left in this channel :)")
+		channelMessageSendDeleteAble(s, m, "No messages to delete left in this channel :)")
 		return
 	}
 
@@ -82,6 +82,7 @@ func removeChannelMessageFromQueue(s *discordgo.Session, m *discordgo.MessageCre
 func addChannelMessageDeleteAble(s *discordgo.Session, m *discordgo.MessageCreate, message *discordgo.Message) {
 	ch, _ := s.Channel(m.ChannelID)
 	gu, _ := s.Guild(ch.GuildID)
+
 	if _, ok := posts.m[gu]; !ok {
 		posts.m[gu] = make(map[string][]*discordgo.Message)
 	}
@@ -89,7 +90,7 @@ func addChannelMessageDeleteAble(s *discordgo.Session, m *discordgo.MessageCreat
 
 }
 
-func ChannelMessageSendDeleteAble(s *discordgo.Session, m *discordgo.MessageCreate, content string) (*discordgo.Message, error) {
+func channelMessageSendDeleteAble(s *discordgo.Session, m *discordgo.MessageCreate, content string) (*discordgo.Message, error) {
 	posts.Lock()
 	defer posts.Unlock()
 
@@ -106,7 +107,7 @@ func _(s *discordgo.Session, m *discordgo.MessageCreate, content string) (*disco
 	return message, err
 }
 
-func ChannelMessageSendEmbedDeleteAble(s *discordgo.Session, m *discordgo.MessageCreate, content *discordgo.MessageEmbed) (*discordgo.Message, error) {
+func channelMessageSendEmbedDeleteAble(s *discordgo.Session, m *discordgo.MessageCreate, content *discordgo.MessageEmbed) (*discordgo.Message, error) {
 	posts.Lock()
 	defer posts.Unlock()
 	message, err := s.ChannelMessageSendEmbed(m.ChannelID, content)

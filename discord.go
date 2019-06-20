@@ -52,16 +52,16 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 				//Only want one word since that's all the API can take.
 				switch strings.Trim(tokens[1], `\/`) {
 				case "cm", "y", "gif", "e", "h", "hc", "b", "mlp", "lgbt", "soc", "s", "hm", "d", "t", "aco", "r", "pol", "trash":
-					ChannelMessageSendDeleteAble(s, m, "I am a Christian bot, please don't make me blacklist you.\nFor now consider one of the following books instead for your reading pleasure.")
+					channelMessageSendDeleteAble(s, m, "I am a Christian bot, please don't make me blacklist you.\nFor now consider one of the following books instead for your reading pleasure.")
 					bibleBooks(s, m)
 					return
 				}
 				fourchan(s, m, tokens[1])
 			} else {
-				ChannelMessageSendDeleteAble(s, m, "Provide a board please!")
+				channelMessageSendDeleteAble(s, m, "Provide a board please!")
 			}
 		case "bible":
-			ChannelMessageSendDeleteAble(s, m, "Sorry, the bible is not available digitally today :(")
+			channelMessageSendDeleteAble(s, m, "Sorry, the bible is not available digitally today :(")
 			return
 			//if len(tokens) > 1 {
 			//	bibleSearch(s, m, strings.Join(tokens[1:], " "))
@@ -70,7 +70,7 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if len(tokens) == 3 {
 				n, err := strconv.ParseFloat(tokens[1], 64)
 				if err != nil {
-					ChannelMessageSendDeleteAble(s, m, "Failed to read conversion amount.")
+					channelMessageSendDeleteAble(s, m, "Failed to read conversion amount.")
 					return
 				}
 				breads(s, m, n, strings.ToUpper(tokens[2]))
@@ -78,7 +78,7 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if len(tokens) == 4 && tokens[2] == "to" {
 				n, err := strconv.ParseFloat(tokens[1], 64)
 				if err != nil {
-					ChannelMessageSendDeleteAble(s, m, "Failed to read conversion amount.")
+					channelMessageSendDeleteAble(s, m, "Failed to read conversion amount.")
 					return
 				}
 				fiats(s, m, n, strings.ToUpper(tokens[3]))

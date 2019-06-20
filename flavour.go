@@ -32,7 +32,7 @@ func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	for _, user := range m.Mentions {
 		if user.ID == botID {
-			ChannelMessageSendDeleteAble(s, m, "Thank you for the kind message, <@"+m.Author.ID+">")
+			channelMessageSendDeleteAble(s, m, "Thank you for the kind message, <@"+m.Author.ID+">")
 		}
 	}
 }
