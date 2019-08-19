@@ -2,10 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -36,49 +38,64 @@ func latestTweet() string {
 	return user.Status.Text
 }
 
+func getTweetID(link string) (int64, error) {
+	u, err := url.Parse(link)
+	if err != nil {
+		return 0, err
+	}
+
+	u.RawQuery = "" //Drop parameters
+
+	suffix := u.RequestURI()
+	tokens := strings.Split(suffix, "/")
+	for i, v := range tokens {
+		if v == "status" && i < len(tokens)-1 {
+			return strconv.ParseInt(tokens[i+1], 10, 64)
+		}
+	}
+	return 0, errors.New("Invalid tweet URL")
+}
+
 // Attempts to grab images not embedded by discord and post them
 func embedImages(s *discordgo.Session, m *discordgo.MessageCreate, link string) {
-	// Parse URL for it's ID
-	pos := strings.Index(link, "/status/")
-	if pos != -1 { // If the link is valid, it will find status and return not -1
-		pos += len("/status/")
-		IDString := link[pos:len(link)]              // slice off the URL stuff
-		IDString = strings.TrimSuffix(IDString, "/") // Attempt to slice off a possible if it exists /
-		ID, err := strconv.ParseInt(IDString, 10, 64)
-		if err != nil {
-			log.Println(err)
+	ID, err := getTweetID(link)
+	if err != nil {
+		log.Println(err)
+		channelMessageSendDeleteAble(s, m, "Sorry, this tweet URL seems malformed to me :(")
+		return
+	}
+	// Pass the tweet ID to show, get tweet
+	// https://godoc.org/github.com/dghubble/go-twitter/twitter#StatusService.Show
+	statusShowParams := twitter.StatusShowParams{}
+	statusShowParams.TweetMode = "extended"
+	tweet, resp, err := twitterClient.Statuses.Show(ID, &statusShowParams)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	if resp.StatusCode != http.StatusOK {
+		log.Println(resp.Status)
+		return
+	}
+	// Check if it has more than one image
+	imageCount := 0
+	msgResp := ""
+	if tweet.ExtendedEntities == nil || tweet.ExtendedEntities.Media == nil {
+		log.Println("Failed to read image data from tweet")
+		return
+	}
+	for index, elem := range tweet.ExtendedEntities.Media {
+		if elem.Type == "photo" {
+			imageCount = imageCount + 1
 		}
-
-		// Pass the tweet ID to show, get tweet
-		// https://godoc.org/github.com/dghubble/go-twitter/twitter#StatusService.Show
-		statusShowParams := twitter.StatusShowParams{}
-		tweet, resp, err := twitterClient.Statuses.Show(ID, &statusShowParams)
-		if err != nil {
-			log.Println(err)
+		if index != 0 { // If it's the first image, don't repost it
+			msgResp += elem.MediaURL + "\n"
 		}
-		if resp.StatusCode != http.StatusOK {
-			log.Println(resp.Status)
-		}
-		// Check if it has more than one image
-		imageCount := 0
-		msgResp := ""
-		if tweet.ExtendedEntities.Media == nil {
-			log.Println("Failed to read image data from tweet")
-			return
-		}
-		for index, elem := range tweet.ExtendedEntities.Media {
-			if elem.Type == "photo" {
-				imageCount = imageCount + 1
-			}
-			if index != 0 { // If it's the first image, don't repost it
-				msgResp += elem.MediaURL + "\n"
-			}
-		}
-		// If so, post them!
-		if imageCount > 1 {
-			channelMessageSendDeleteAble(s, m, msgResp)
-			return
-		}
+	}
+	// If so, post them!
+	if imageCount > 1 {
+		channelMessageSendDeleteAble(s, m, msgResp)
+		return
 	}
 }
 
