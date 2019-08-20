@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -27,6 +28,21 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 		switch strings.ToLower(tokens[0]) {
+		case "youtube":
+			if len(tokens) > 1 {
+				youtubeSearch(s, m, strings.Join(tokens[1:], " "))
+			}
+		case "limit":
+			if len(tokens) > 1 {
+				count, err := strconv.Atoi(tokens[1])
+				if err != nil || count < 1 || count > 25 {
+					channelMessageSendDeleteAble(s, m, "Failed to update limit")
+					break
+				}
+				MaxYoutubeResults = count
+			} else {
+				channelMessageSendDeleteAble(s, m, "Current limit:"+fmt.Sprint(MaxYoutubeResults))
+			}
 		case "moon", "moonphase", "phase":
 			moonPhase(s, m)
 		case "delete", "delet":

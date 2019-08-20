@@ -27,6 +27,7 @@ var (
 	discordBotToken       = flag.String("token", "", "Discord Bot Token")
 	bibleAccessToken      = flag.String("bible", "", "Bible search token")
 	fixerAPIToken         = flag.String("fixer", "", "Fixer currency token")
+	youtubeAPIKey         = flag.String("youtube", "", "Youtube API Key with search permissions")
 	printVersion          = flag.Bool("v", false, "Display current version")
 )
 
@@ -44,7 +45,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *twitterConsumerKey == "" || *twitterConsumerSecret == "" || *twitterAccessToken == "" || *twitterAccessSecret == "" || *discordBotToken == "" || *bibleAccessToken == "" {
+	if *twitterConsumerKey == "" || *twitterConsumerSecret == "" || *twitterAccessToken == "" || *twitterAccessSecret == "" || *discordBotToken == "" || *bibleAccessToken == "" || *youtubeAPIKey == "" {
 		log.Println(*twitterConsumerKey, *twitterConsumerSecret, *twitterAccessToken, *twitterAccessSecret, *discordBotToken, *bibleAccessToken)
 		log.Fatal("Consumer key/secret and Access token/secret required")
 	}
