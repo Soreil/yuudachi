@@ -46,7 +46,7 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "moon", "moonphase", "phase":
 			moonPhase(s, m)
 		case "delete", "delet":
-			ChannelMessageDeleteMostRecent(s, m)
+			ChannelMessageDeleteMostRecentOwnMessage(s, m)
 		case "version", "v":
 			version(s, m)
 		case "twitter":
