@@ -32,6 +32,8 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if len(tokens) > 1 {
 				youtubeSearch(s, m, strings.Join(tokens[1:], " "))
 			}
+		case "next":
+			nextVideo(s, m)
 		case "limit":
 			if len(tokens) > 1 {
 				count, err := strconv.Atoi(tokens[1])
@@ -122,7 +124,7 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		case "np", "song", "dj":
 			radioCurrent(s, m)
-		case "queue", "next":
+		case "queue":
 			radioQueue(s, m)
 		case "b", "birb", "bird", "birds":
 			birds(s, m)
