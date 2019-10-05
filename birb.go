@@ -9,7 +9,7 @@ import (
 )
 
 func birds(s *discordgo.Session, m *discordgo.MessageCreate) {
-	var birds = []string{":bird:", ":dove:", ":chicken:", ":baby_chick:", ":rooster:", ":penguin:", ":turkey:", ":eagle:", ":duck:", ":owl:", "🦢"}
+	var birds = []string{"🦢", "🐥", "🐤", "🐣", "🐓", "🐔", "🐦", "🐧", "🕊️", "🦅", "🦆", "🦉", "🦚", "🦜"}
 
 	//We want to use server specific fun old style emoji.
 	ch, _ := s.Channel(m.ChannelID)
@@ -22,5 +22,10 @@ func birds(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
+	for _, emoji := range gu.Emojis {
+		if name := strings.ToLower(emoji.Name); strings.Contains(name, "birb") || strings.Contains(name, "bird") {
+			birds = append(birds, "<:"+emoji.APIName()+">")
+		}
+	}
 	channelMessageSendDeleteAble(s, m, birds[rand.Intn(len(birds))])
 }

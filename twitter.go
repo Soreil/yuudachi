@@ -25,6 +25,21 @@ const hanyuuDisplayName string = "Hanyuu_status"
 
 var twitterClient twitterWrapper
 
+//We are duplicating all the work already done by the embedImages function,
+//we should simplify this.
+func findTweet(s *discordgo.Session, m *discordgo.MessageCreate) {
+	words := strings.Split(m.Content, " ")
+	for _, word := range words {
+		if strings.Contains(word, "twitter.com") {
+			if u, err := url.Parse(word); err == nil {
+				if u.Hostname() == "twitter.com" {
+					embedImages(s, m, word)
+				}
+			}
+		}
+	}
+}
+
 func latestTweet() string {
 	user, resp, err := twitterClient.Users.Show(&twitter.UserShowParams{
 		ScreenName: hanyuuDisplayName,
@@ -61,7 +76,6 @@ func embedImages(s *discordgo.Session, m *discordgo.MessageCreate, link string) 
 	ID, err := getTweetID(link)
 	if err != nil {
 		log.Println(err)
-		channelMessageSendDeleteAble(s, m, "Sorry, this tweet URL seems malformed to me :(")
 		return
 	}
 	// Pass the tweet ID to show, get tweet

@@ -79,6 +79,7 @@ func main() {
 
 	//here we add the functions
 	dg.AddHandler(personality)
+	dg.AddHandler(findTweet)
 	dg.AddHandler(command)
 	log.Println("Handlers added")
 

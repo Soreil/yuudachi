@@ -124,6 +124,15 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		case "np", "song", "dj":
 			radioCurrent(s, m)
+		case "roll":
+			if len(tokens) > 1 {
+				n, err := strconv.Atoi(tokens[1])
+				if err == nil {
+					roll(s, m, n)
+					break
+				}
+			}
+			roll(s, m, 100)
 		case "queue":
 			radioQueue(s, m)
 		case "b", "birb", "bird", "birds":
