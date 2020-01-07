@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"time"
 
@@ -16,13 +17,13 @@ type moonPhaseName string
 
 const (
 	newMoon            moonPhaseName = "New Moon"
-	waxingCrescentMoon               = "Waxing Crescent Moon"
+	waxingCrescentMoon moonPhaseName = "Waxing Crescent Moon"
 	firstQuarter       moonPhaseName = "First Quarter"
-	waxingGibbousMoon                = "Waxing Gibbous Moon"
+	waxingGibbousMoon  moonPhaseName = "Waxing Gibbous Moon"
 	fullMoon           moonPhaseName = "Full Moon"
-	waningGibbousMoon                = "Waning Gibbous Moon"
+	waningGibbousMoon  moonPhaseName = "Waning Gibbous Moon"
 	lastQuarter        moonPhaseName = "Last Quarter"
-	waningCrescentMoon               = "Waning Crescent Moon"
+	waningCrescentMoon moonPhaseName = "Waning Crescent Moon"
 )
 
 const (
@@ -148,7 +149,8 @@ func getMoonPhase() (moon rune, err error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		panic(err)
+		log.Println(err)
+		return moon, err
 	}
 	if resp.StatusCode != http.StatusOK {
 		return moon, errors.New("Moon phase lookup failed: " + resp.Status)
@@ -168,12 +170,47 @@ func getMoonPhase() (moon rune, err error) {
 	return
 }
 
+func percentPhase(percentage float64) rune {
+	percentage *= 8
+	percentage = math.Round(percentage)
+	switch percentage {
+	case 0:
+		return newMoon.Rune()
+	case 1:
+		return waxingCrescentMoon.Rune()
+	case 2:
+		return firstQuarter.Rune()
+	case 3:
+		return waxingGibbousMoon.Rune()
+	case 4:
+		return fullMoon.Rune()
+	case 5:
+		return waningGibbousMoon.Rune()
+	case 6:
+		return lastQuarter.Rune()
+	case 7:
+		return waningCrescentMoon.Rune()
+	case 8:
+		return newMoon.Rune()
+	default:
+		return '🦆'
+
+	}
+}
+
 func moonPhase(s *discordgo.Session, m *discordgo.MessageCreate) {
 	moon, err := getMoonPhase()
 	if err != nil {
-		log.Println(err)
-		channelMessageSendDeleteAble(s, m, "Sorry, I failed to inspect the moon.")
-		return
+		//log.Println(err)
+		//channelMessageSendDeleteAble(s, m, "Sorry, I failed to inspect the moon.")
+		//return
+		previousNewMoon := time.Date(2019, time.June, 3, 12, 1, 0, 0, time.Local)
+		delta := time.Since(previousNewMoon)
+		daysPerMonth := 29.530588853
+		moonDay := math.Mod(delta.Hours()/24, daysPerMonth) + 1
+		percentage := moonDay / daysPerMonth
+		moon = percentPhase(percentage)
+
 	}
 	channelMessageSendDeleteAble(s, m, string(moon))
 }

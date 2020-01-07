@@ -20,7 +20,6 @@ var (
 var (
 	discordBotToken  = flag.String("token", "", "Discord Bot Token")
 	bibleAccessToken = flag.String("bible", "", "Bible search token")
-	fixerAPIToken    = flag.String("fixer", "", "Fixer currency token")
 	youtubeAPIKey    = flag.String("youtube", "", "Youtube API Key with search permissions")
 	printVersion     = flag.Bool("v", false, "Display current version")
 )
