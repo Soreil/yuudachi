@@ -15,9 +15,9 @@ import (
 const breadBase = "RON"
 const breadRatio = 1.0
 
-var currencyAPI = `https://data.fixer.io/api/latest?access_key=` + *fixerAPIToken + `?base=` + breadBase
+var currencyAPI = `https://api.frankfurter.app/latest?from=` + breadBase
 
-//Currency maps to the fixer API
+//Currency maps to the frankfurtr API
 type Currency struct {
 	Base  string                 `json:"base"`
 	Date  string                 `json:"date"`

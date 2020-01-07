@@ -6,8 +6,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-const appVersion = `14-5-2019
-"we now have a basic twitter media reposter for images not embedded by Discord"`
+const appVersion = `07-01-2020
+"Added back in bread support :)"`
 
 func version(s *discordgo.Session, m *discordgo.MessageCreate) {
 	msg := "Current version: " + appVersion

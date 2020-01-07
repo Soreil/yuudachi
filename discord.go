@@ -51,10 +51,10 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			ChannelMessageDeleteMostRecentOwnMessage(s, m)
 		case "version", "v":
 			version(s, m)
-		case "twitter":
-			if len(tokens) > 1 {
-				embedImages(s, m, tokens[1])
-			}
+			//	case "twitter":
+			//		if len(tokens) > 1 {
+			//			embedImages(s, m, tokens[1])
+			//		}
 		case "dog", "doggo", "goodboy":
 			randomDogImage(s, m)
 		case "fortune", "f":
@@ -70,20 +70,13 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 				//Only want one word since that's all the API can take.
 				switch strings.Trim(tokens[1], `\/`) {
 				case "cm", "y", "gif", "e", "h", "hc", "b", "mlp", "lgbt", "soc", "s", "hm", "d", "t", "aco", "r", "pol", "trash":
-					channelMessageSendDeleteAble(s, m, "I am a Christian bot, please don't make me blacklist you.\nFor now consider one of the following books instead for your reading pleasure.")
-					bibleBooks(s, m)
+					channelMessageSendDeleteAble(s, m, "Sorry but this is a banned board")
 					return
 				}
 				fourchan(s, m, tokens[1])
 			} else {
 				channelMessageSendDeleteAble(s, m, "Provide a board please!")
 			}
-		case "bible":
-			channelMessageSendDeleteAble(s, m, "Sorry, the bible is not available digitally today :(")
-			return
-			//if len(tokens) > 1 {
-			//	bibleSearch(s, m, strings.Join(tokens[1:], " "))
-			//}
 		case "breads", "bread", ":bread:", "🍞":
 			if len(tokens) == 3 {
 				n, err := strconv.ParseFloat(tokens[1], 64)
@@ -101,6 +94,7 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 				}
 				fiats(s, m, n, strings.ToUpper(tokens[3]))
 			}
+
 		case "r", "radio", `r/a/dio`, `r-a-dio`, `r-a-d.io`:
 			if len(tokens) > 1 {
 				switch tokens[1] {
@@ -108,10 +102,6 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 					radioCurrent(s, m)
 				case "q", "queue", "next":
 					radioQueue(s, m)
-				case "news":
-					hanyuuUpdate(s, m)
-				case "subscribe":
-					radioSubscribe(s, m)
 				case "search", "s":
 					if len(tokens) > 2 {
 						radioSearch(s, m, strings.Join(tokens[2:], " "))

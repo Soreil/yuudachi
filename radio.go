@@ -61,26 +61,6 @@ const radioRed = 0xDF4C3A
 
 var subs []string
 
-func hanyuuUpdate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	tweet := latestTweet()
-	for _, channel := range subs {
-		m.ChannelID = channel
-		channelMessageSendDeleteAble(s, m, tweet)
-	}
-}
-
-func radioSubscribe(s *discordgo.Session, m *discordgo.MessageCreate) {
-	for i, v := range subs {
-		if m.ChannelID == v {
-			subs = append(subs[:i], subs[i+1:]...)
-			channelMessageSendDeleteAble(s, m, "Unsubscribed from r/a/dio notifications.")
-			return
-		}
-	}
-	subs = append(subs, m.ChannelID)
-	channelMessageSendDeleteAble(s, m, "Subscribed to r/a/dio notifications.")
-}
-
 func radioState() (Current, error) {
 	//Get the current state structure from the r/a/dio API
 	resp, err := http.Get(api)
