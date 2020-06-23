@@ -66,7 +66,7 @@ func youtubeSearch(s *discordgo.Session, m *discordgo.MessageCreate, query strin
 		channelMessageSendDeleteAble(s, m, msgs[i])
 	}
 
-	vids := enqueueVideos(msgs[MaxYoutubeResults:])
+	vids := enqueueVideos(msgs[:MaxYoutubeResults])
 	videos.Lock()
 	defer videos.Unlock()
 	videos.userVideos[m.Author.ID] = vids
