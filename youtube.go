@@ -36,7 +36,7 @@ func youtubeSearch(s *discordgo.Session, m *discordgo.MessageCreate, query strin
 		log.Println(err)
 		return
 	}
-	call := youtubeService.Search.List("id,snippet").Q(query).MaxResults(int64(25))
+	call := youtubeService.Search.List([]string{"id", "snippet"}).Q(query).MaxResults(int64(25))
 	call.Type("video")
 	response, err := call.Do()
 	if err != nil {

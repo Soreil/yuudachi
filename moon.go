@@ -147,7 +147,10 @@ func getMoonPhase() (moon rune, err error) {
 	//req.Header.Add("nump", strconv.Itoa(4)) //Number of moon phases requested
 	//req.Header.Add("dst", "false")
 
-	resp, err := http.DefaultClient.Do(req)
+	clt := http.Client{
+		Timeout: time.Second,
+	}
+	resp, err := clt.Do(req)
 	if err != nil {
 		log.Println(err)
 		return moon, err
