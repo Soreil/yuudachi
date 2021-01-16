@@ -66,10 +66,12 @@ func youtubeSearch(s *discordgo.Session, m *discordgo.MessageCreate, query strin
 		channelMessageSendDeleteAble(s, m, msgs[i])
 	}
 
-	vids := enqueueVideos(msgs[MaxYoutubeResults:])
-	videos.Lock()
-	defer videos.Unlock()
-	videos.userVideos[m.Author.ID] = vids
+	if len(msgs) > 0 {
+		vids := enqueueVideos(msgs[MaxYoutubeResults:])
+		videos.Lock()
+		defer videos.Unlock()
+		videos.userVideos[m.Author.ID] = vids
+	}
 }
 
 func enqueueVideos(videos []string) <-chan string {
