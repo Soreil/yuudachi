@@ -52,9 +52,6 @@ func youtubeSearch(s *discordgo.Session, m *discordgo.MessageCreate, query strin
 		case "youtube#video":
 			var msg string
 
-			//msg += item.Snippet.ChannelTitle + "\n"
-			//msg += item.Snippet.Title + "\n"
-
 			//Discord will create an embed structure from the link
 			//so we don't need to provide our own metadata for video
 			msg += fmt.Sprintf("https://youtube.com/watch/?v=%s\n", item.Id.VideoId)
