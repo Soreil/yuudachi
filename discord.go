@@ -20,7 +20,7 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(m.Content) == 0 {
 		return
 	}
-	//We have a exclamation point
+
 	if m.Content[0] == '!' && len(m.Content) > 2 {
 		m.Content = m.Content[1:]
 		tokens := strings.Split(m.Content, " ")
@@ -28,6 +28,11 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 		switch strings.ToLower(tokens[0]) {
+		case "nightcore":
+			if len(tokens) > 1 {
+				tokens = append(tokens, "nightcore")
+				youtubeSearch(s, m, strings.Join(tokens[1:], " "))
+			}
 		case "youtube":
 			if len(tokens) > 1 {
 				youtubeSearch(s, m, strings.Join(tokens[1:], " "))
@@ -51,10 +56,6 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			ChannelMessageDeleteMostRecentOwnMessage(s, m)
 		case "version", "v":
 			version(s, m)
-			//	case "twitter":
-			//		if len(tokens) > 1 {
-			//			embedImages(s, m, tokens[1])
-			//		}
 		case "dog", "doggo", "goodboy":
 			randomDogImage(s, m)
 		case "fortune", "f":
@@ -114,15 +115,6 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		case "np", "song", "dj":
 			radioCurrent(s, m)
-		case "roll":
-			if len(tokens) > 1 {
-				n, err := strconv.Atoi(tokens[1])
-				if err == nil {
-					roll(s, m, n)
-					break
-				}
-			}
-			roll(s, m, 100)
 		case "queue":
 			radioQueue(s, m)
 		case "b", "birb", "bird", "birds":
@@ -130,8 +122,6 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "clap", "👏", "c":
 			clap(s, m, tokens[1:])
 		default:
-			//ChannelMessageSendDeleteAble(s, m, "Unrecognized command: "+tokens[0])
-			//usage(s, m)
 		}
 	}
 }

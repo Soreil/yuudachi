@@ -141,12 +141,6 @@ func getMoonPhase() (moon rune, err error) {
 		return moon, err
 	}
 
-	//req.Header.Add("year", strconv.Itoa(year))
-	//req.Header.Add("month", strconv.Itoa(int(month)))
-	//req.Header.Add("day", strconv.Itoa(day))
-	//req.Header.Add("nump", strconv.Itoa(4)) //Number of moon phases requested
-	//req.Header.Add("dst", "false")
-
 	clt := http.Client{
 		Timeout: time.Second,
 	}
@@ -204,9 +198,6 @@ func percentPhase(percentage float64) rune {
 func moonPhase(s *discordgo.Session, m *discordgo.MessageCreate) {
 	moon, err := getMoonPhase()
 	if err != nil {
-		//log.Println(err)
-		//channelMessageSendDeleteAble(s, m, "Sorry, I failed to inspect the moon.")
-		//return
 		previousNewMoon := time.Date(2019, time.June, 3, 12, 1, 0, 0, time.Local)
 		delta := time.Since(previousNewMoon)
 		daysPerMonth := 29.530588853
