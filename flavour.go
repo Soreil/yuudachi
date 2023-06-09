@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
 	"log"
 	"strings"
+
+	"github.com/bwmarrin/discordgo"
 )
 
-//Yuudachi's flavour replies.
+// Yuudachi's flavour replies.
 func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	if m.Author.Bot || m.Author.Username == "Liru" {
@@ -32,7 +33,7 @@ func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	for _, user := range m.Mentions {
 		if user.ID == botID {
-			channelMessageSendDeleteAble(s, m, "Thank you for the kind message, <@"+m.Author.ID+">")
+			s.ChannelMessageSend(m.ChannelID, "Thank you for the kind message, <@"+m.Author.ID+">")
 		}
 	}
 }

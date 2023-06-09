@@ -4,10 +4,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-const appVersion = `18-03-2021
-"no more rolls Sadge"`
+const appVersion = `09-06-2023
+"New era"`
 
 func version(s *discordgo.Session, m *discordgo.MessageCreate) {
 	msg := "Current version: " + appVersion
-	channelMessageSendDeleteAble(s, m, msg)
+	s.ChannelMessageSend(m.ChannelID, msg)
 }

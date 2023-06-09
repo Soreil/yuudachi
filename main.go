@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"time"
 
@@ -13,22 +12,14 @@ import (
 )
 
 var (
-	botID   string
-	botName string
+	botID string
 )
 
 var (
-	discordBotToken  = flag.String("token", "", "Discord Bot Token")
-	bibleAccessToken = flag.String("bible", "", "Bible search token")
-	youtubeAPIKey    = flag.String("youtube", "", "Youtube API Key with search permissions")
-	printVersion     = flag.Bool("v", false, "Display current version")
+	discordBotToken = flag.String("token", "", "Discord Bot Token")
+	youtubeAPIKey   = flag.String("youtube", "", "Youtube API Key with search permissions")
+	printVersion    = flag.Bool("v", false, "Display current version")
 )
-
-const userAgent = "Yuudachi/0.2"
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 func main() {
 	iniflags.Parse()
@@ -53,7 +44,6 @@ func main() {
 	log.Println("Got bot details")
 
 	botID = u.ID
-	botName = u.Username
 
 	//here we add the functions
 	dg.AddHandler(personality)

@@ -9,6 +9,7 @@ import (
 )
 
 func birds(s *discordgo.Session, m *discordgo.MessageCreate) {
+	//There isn't really a way to get a lot of all bird related emoji in unicode so for now it's just a hard coded list
 	var birds = []string{"🦢", "🐥", "🐤", "🐣", "🐓", "🐔", "🐦", "🐧", "🕊️", "🦅", "🦆", "🦉", "🦚", "🦜"}
 
 	//We want to use server specific fun old style emoji.
@@ -27,5 +28,6 @@ func birds(s *discordgo.Session, m *discordgo.MessageCreate) {
 			birds = append(birds, "<:"+emoji.APIName()+">")
 		}
 	}
-	channelMessageSendDeleteAble(s, m, birds[rand.Intn(len(birds))])
+
+	s.ChannelMessageSend(m.ChannelID, birds[rand.Intn(len(birds))])
 }

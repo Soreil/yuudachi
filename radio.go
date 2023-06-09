@@ -12,7 +12,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-//Current song API response
+// Current song API response
 type Current struct {
 	Main struct {
 		Np           string `json:"np"`
@@ -59,8 +59,6 @@ const api = `https://r-a-d.io/api`
 const frontpage = `https://r-a-d.io`
 const radioRed = 0xDF4C3A
 
-var subs []string
-
 func radioState() (Current, error) {
 	//Get the current state structure from the r/a/dio API
 	resp, err := http.Get(api)
@@ -84,7 +82,7 @@ func radioState() (Current, error) {
 }
 
 func radioHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
-	channelMessageSendDeleteAble(s, m, "Usage: !radio [queue, dj]")
+	s.ChannelMessageSend(m.ChannelID, "Usage: !radio [queue, dj]")
 }
 
 func radioQueue(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -94,7 +92,7 @@ func radioQueue(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if !record.Main.Isafkstream {
-		channelMessageSendDeleteAble(s, m, "Sadly Hanyuu is not in a position to play the current queue, a DJ is playing!")
+		s.ChannelMessageSend(m.ChannelID, "Sadly Hanyuu is not in a position to play the current queue, a DJ is playing!")
 		return
 	}
 	queue := make([]*discordgo.MessageEmbedField, len(record.Main.Queue))
@@ -117,7 +115,7 @@ func radioQueue(s *discordgo.Session, m *discordgo.MessageCreate) {
 		Thumbnail: &discordgo.MessageEmbedThumbnail{URL: api + "/dj-image/" + record.Main.Dj.Djimage},
 		Fields:    queue,
 	}
-	channelMessageSendEmbedDeleteAble(s, m, embed)
+	s.ChannelMessageSendEmbed(m.ChannelID, embed)
 }
 
 func radioCurrent(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -154,12 +152,12 @@ func radioCurrent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		Thumbnail: &discordgo.MessageEmbedThumbnail{URL: api + "/dj-image/" + record.Main.Dj.Djimage},
 		Fields:    fields,
 	}
-	if _, err := channelMessageSendEmbedDeleteAble(s, m, embed); err != nil {
+	if _, err := s.ChannelMessageSendEmbed(m.ChannelID, embed); err != nil {
 		log.Println(err)
 	}
 }
 
-//Songs is the API response of the current music queue
+// Songs is the API response of the current music queue
 type Songs []struct {
 	Artist        string `json:"artist"`
 	Title         string `json:"title"`
@@ -169,7 +167,7 @@ type Songs []struct {
 	Requestable   bool   `json:"requestable"`
 }
 
-//Search is the API response for a music index search query
+// Search is the API response for a music index search query
 type Search struct {
 	Total       int   `json:"total"`
 	PerPage     int   `json:"per_page"`
@@ -233,7 +231,7 @@ func radioSearch(s *discordgo.Session, m *discordgo.MessageCreate, name string) 
 	for i := range lines {
 		lines[i] = songs[i].Artist + " - " + "[" + songs[i].Title + "]" + "(" + `https://r-a-d.io/request/` + strconv.Itoa(songs[i].ID) + ")"
 	}
-	if _, err := channelMessageSendDeleteAble(s, m, strings.Join(lines, "\n")); err != nil {
+	if _, err := s.ChannelMessageSend(m.ChannelID, strings.Join(lines, "\n")); err != nil {
 		log.Println(err)
 	}
 }

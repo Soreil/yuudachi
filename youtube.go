@@ -12,7 +12,7 @@ import (
 	"google.golang.org/api/youtube/v3"
 )
 
-//MaxYoutubeResults is a configurable limit to amount of videos to get from API
+// MaxYoutubeResults is a configurable limit to amount of videos to get from API
 var MaxYoutubeResults = 1
 
 type videoQueue struct {
@@ -60,7 +60,7 @@ func youtubeSearch(s *discordgo.Session, m *discordgo.MessageCreate, query strin
 		}
 	}
 	for i := 0; i < MaxYoutubeResults && i < len(msgs); i++ {
-		channelMessageSendDeleteAble(s, m, msgs[i])
+		s.ChannelMessageSend(m.ChannelID, msgs[i])
 	}
 
 	if len(msgs) > 0 {
@@ -83,8 +83,8 @@ func nextVideo(s *discordgo.Session, m *discordgo.MessageCreate) {
 	videos.Lock()
 	defer videos.Unlock()
 	if len(videos.userVideos[m.Author.ID]) <= 0 {
-		channelMessageSendDeleteAble(s, m, "Your video queue is empty :(")
+		s.ChannelMessageSend(m.ChannelID, "Your video queue is empty :(")
 		return
 	}
-	channelMessageSendDeleteAble(s, m, <-videos.userVideos[m.Author.ID])
+	s.ChannelMessageSend(m.ChannelID, <-videos.userVideos[m.Author.ID])
 }

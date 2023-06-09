@@ -2,18 +2,30 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/bwmarrin/discordgo"
 	"log"
 	"net/http"
+
+	"errors"
+
+	"github.com/bwmarrin/discordgo"
 )
 
+type Fortune struct {
+	Fortune string `json:"fortune"`
+}
+
+type FortuneBodyError struct {
+	Err error
+}
+
+func (f *FortuneBodyError) Error() string {
+	return f.Err.Error()
+}
+
 func fortune(s *discordgo.Session, m *discordgo.MessageCreate, category string) {
-	type Fortune struct {
-		Fortune string `json:"fortune"`
-	}
 	u := "http://www.yerkee.com/api/fortune"
 	if category == "help" {
-		channelMessageSendDeleteAble(s, m, "Fortune usage:\n!fortune CATEGORY\nWhere category is one of: computers, cookie, definitions, miscellaneous, people, platitudes, politics, science, wisdom\nIf no category is given a random one is chosen.")
+		s.ChannelMessageSend(m.ChannelID, "Fortune usage:\n!fortune CATEGORY\nWhere category is one of: computers, cookie, definitions, miscellaneous, people, platitudes, politics, science, wisdom\nIf no category is given a random one is chosen.")
 		return
 	}
 	switch category {
@@ -21,13 +33,24 @@ func fortune(s *discordgo.Session, m *discordgo.MessageCreate, category string) 
 		u += "/" + category
 	case "":
 	default:
-		channelMessageSendDeleteAble(s, m, "Unknown category, type \"!fortune help\" for a list of categories allowed.")
+		s.ChannelMessageSend(m.ChannelID, "Unknown category, type \"!fortune help\" for a list of categories allowed.")
 		return
 	}
-	resp, err := http.Get(u)
+
+	record, err := FetchFortune(u)
+
+	//Didn't get a fortune
+	if err == nil {
+		s.ChannelMessageSend(m.ChannelID, record.Fortune)
+	} else {
+		log.Println(err)
+	}
+}
+
+func FetchFortune(url string) (Fortune, error) {
+	resp, err := http.Get(url)
 	if err != nil {
-		log.Fatal("Failed to get resource: ", err)
-		return
+		return Fortune{}, err
 	}
 	defer resp.Body.Close()
 
@@ -36,10 +59,9 @@ func fortune(s *discordgo.Session, m *discordgo.MessageCreate, category string) 
 		log.Println(err)
 	}
 
-	//Didn't get a fortune
-	if record.Fortune != "" {
-		channelMessageSendDeleteAble(s, m, record.Fortune)
-	} else {
-		log.Println("Failed to get a fortune.")
+	if record.Fortune == "" {
+		return Fortune{}, errors.New("no fortune body")
 	}
+
+	return record, nil
 }

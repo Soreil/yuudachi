@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
-	"unicode"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/jaytaylor/html2text"
@@ -31,18 +30,15 @@ const (
 	countryRoot = "http://s.4cdn.org/image/country"
 )
 
-// Adds <> around the links to prevent embedding
-//TODO(sjon): Cleanup and verify correctness
-func unembedURL(s string) string {
-	start := strings.Index(s, "http")
-	if start == -1 {
-		return s
+var bannedBoards = []string{"cm", "y", "gif", "e", "h", "hc", "b", "mlp", "lgbt", "soc", "s", "hm", "d", "t", "aco", "r", "pol", "trash"}
+
+func BannedBoard(s string) bool {
+	for _, v := range bannedBoards {
+		if v == s {
+			return true
+		}
 	}
-	end := strings.IndexFunc(s[start:], unicode.IsSpace) + start
-	if end > start {
-		return s[:start] + "<" + s[start:end] + ">" + unembedURL(s[end:])
-	}
-	return s
+	return false
 }
 
 type thread struct {
@@ -106,7 +102,7 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 
 	//TODO(sjon): Implement this in a cleaner manner.
 	if board == "help" {
-		channelMessageSendDeleteAble(s, m, chanUsage)
+		s.ChannelMessageSend(m.ChannelID, chanUsage)
 		return
 	}
 
@@ -152,7 +148,7 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 	}
 
 	reply := formatThread(thread, board)
-	if _, err := channelMessageSendEmbedDeleteAble(s, m, reply); err != nil {
+	if _, err := s.ChannelMessageSendEmbed(m.ChannelID, reply); err != nil {
 		log.Println(err)
 	}
 }
