@@ -113,7 +113,7 @@ func fourchan(s *discordgo.Session, m *discordgo.MessageCreate, board string) {
 		return
 	}
 
-	if err == nil && resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK {
 		log.Println("Error: " + http.StatusText(resp.StatusCode))
 		return
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -10,17 +11,41 @@ import (
 
 const prefix string = "!"
 
+var groqLUT map[string][]Message = map[string][]Message{}
+
 func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	if m.Author.ID == botID {
 		return
 	}
-	//We don't like other bots either, Liru is an alias of a bot which didn't have an official bot account tag
-	if m.Author.Bot || m.Author.Username == "Liru" {
+	//We don't like other bots either
+	if m.Author.Bot {
 		return
 	}
 	if len(m.Content) == 0 {
 		return
+	}
+
+	if m.ReferencedMessage != nil {
+		ctx, contains := groqLUT[m.ReferencedMessage.ID]
+		if contains {
+			msg, history, err := AskGroq(m.Content, ctx)
+
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Oopsie woopsie we got an error groq sisters")
+				log.Println(err)
+			}
+
+			var messages = chunk(msg, 1000)
+			for _, v := range messages {
+				msg, err := s.ChannelMessageSend(m.ChannelID, v)
+				if err != nil {
+					panic(err)
+				}
+				groqLUT[msg.ID] = history
+			}
+			return
+		}
 	}
 
 	if strings.HasPrefix(m.Content, prefix) && len(m.Content) > len(prefix) {
@@ -97,10 +122,27 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "clap", "👏", "c":
 			clap(s, m, tokens[1:])
 		case "groq":
-			msg := AskGroq(strings.Join(tokens[1:], " "))
+
+			msg, history, err := func() (string, []Message, error) {
+				if m.ReferencedMessage != nil {
+					var ctx = groqLUT[m.ReferencedMessage.ID]
+					return AskGroq(strings.Join(tokens[1:], " "), ctx)
+				} else {
+					return AskGroq(strings.Join(tokens[1:], " "), nil)
+				}
+			}()
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Oopsie woopsie we got an error groq sisters")
+				log.Println(err)
+			}
+
 			var messages = chunk(msg, 1000)
 			for _, v := range messages {
-				s.ChannelMessageSend(m.ChannelID, v)
+				msg, err := s.ChannelMessageSend(m.ChannelID, v)
+				if err != nil {
+					panic(err)
+				}
+				groqLUT[msg.ID] = history
 			}
 		default:
 		}

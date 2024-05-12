@@ -4,8 +4,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-const appVersion = `11-05-2024
-"Holy moly"`
+const appVersion = `12-05-2024
+"Groq andy"`
 
 func version(s *discordgo.Session, m *discordgo.MessageCreate) {
 	msg := "Current version: " + appVersion

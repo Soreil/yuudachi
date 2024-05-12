@@ -30,10 +30,4 @@ func personality(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 	}
-
-	for _, user := range m.Mentions {
-		if user.ID == botID {
-			s.ChannelMessageSend(m.ChannelID, "Thank you for the kind message, <@"+m.Author.ID+">")
-		}
-	}
 }

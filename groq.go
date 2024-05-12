@@ -1,28 +1,49 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
-	"strings"
 )
 
 const groqURL = "https://api.groq.com/openai/v1/chat/completions"
-const bodyStart = `{"messages": [{"role": "user", "content": "`
-const bodyEnd = `"}], "model": "`
-const bodyEndReal = `"}`
 
-func AskGroq(question string) string {
+func AskGroq(question string, context []Message) (string, []Message, error) {
 
 	// Create a Bearer string by appending string access token
 	var bearer = "Bearer " + *groqKey
 
-	var bodyReader = strings.NewReader(bodyStart + question + bodyEnd + *groqModel + bodyEndReal)
+	if context == nil {
+		context = []Message{}
+	}
+
+	context = append(context, Message{
+		Role:    "user",
+		Content: question,
+	},
+	)
+
+	var groqRequest = GroqRequest{
+		context,
+		*groqModel,
+	}
+
+	data, err := json.Marshal(groqRequest)
+
+	if err != nil {
+		log.Println(err)
+		return "", context, err
+	}
+
+	var reader = bytes.NewReader(data)
 
 	// Create a new request using http
-	req, err := http.NewRequest("POST", groqURL, bodyReader)
+	req, err := http.NewRequest("POST", groqURL, reader)
 	if err != nil {
-		panic(err)
+		log.Println(err)
+		return "", context, err
 	}
 
 	// add authorization header to the req
@@ -33,7 +54,9 @@ func AskGroq(question string) string {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println("Error on response.\n[ERROR] -", err)
+		err2 := fmt.Errorf("Error on response.\n[ERROR] -: %v", err)
+
+		return "", context, err2
 	}
 	defer resp.Body.Close()
 
@@ -45,7 +68,22 @@ func AskGroq(question string) string {
 
 	log.Printf("%+v\n", p)
 
-	return p.Choices[0].Message.Content
+	if len(p.Choices) == 0 {
+		return "", context, http.ErrContentLength
+	}
+	result := p.Choices[len(p.Choices)-1].Message
+	context = append(context, result)
+	return result.Content, context, nil
+}
+
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type GroqRequest struct {
+	Messages []Message `json:"messages"`
+	Model    string    `json:"model"`
 }
 
 type GroqReponse struct {
