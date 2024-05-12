@@ -96,7 +96,35 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			birds(s, m)
 		case "clap", "👏", "c":
 			clap(s, m, tokens[1:])
+		case "groq":
+			msg := AskGroq(strings.Join(tokens[1:], " "))
+			var messages = chunk(msg, 1000)
+			for _, v := range messages {
+				s.ChannelMessageSend(m.ChannelID, v)
+			}
 		default:
 		}
 	}
+}
+
+func chunk(s string, chunkSize int) []string {
+	if len(s) == 0 {
+		return nil
+	}
+	if chunkSize >= len(s) {
+		return []string{s}
+	}
+	var chunks []string = make([]string, 0, (len(s)-1)/chunkSize+1)
+	currentLen := 0
+	currentStart := 0
+	for i := range s {
+		if currentLen == chunkSize {
+			chunks = append(chunks, s[currentStart:i])
+			currentLen = 0
+			currentStart = i
+		}
+		currentLen++
+	}
+	chunks = append(chunks, s[currentStart:])
+	return chunks
 }

@@ -19,6 +19,8 @@ var (
 	discordBotToken = flag.String("token", "", "Discord Bot Token")
 	youtubeAPIKey   = flag.String("youtube", "", "Youtube API Key with search permissions")
 	printVersion    = flag.Bool("v", false, "Display current version")
+	groqKey         = flag.String("groq", "", "Groq API Key")
+	groqModel       = flag.String("model", "mixtral-8x7b-32768", "AI Model")
 )
 
 func main() {
