@@ -3,12 +3,27 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httputil"
 )
 
 const groqURL = "https://api.groq.com/openai/v1/chat/completions"
+
+func AskGroqSystem(prompt string, context []Message) []Message {
+	if context == nil {
+		context = []Message{}
+	}
+
+	context = append(context, Message{
+		Role:    "system",
+		Content: prompt,
+	})
+
+	return context
+}
 
 func AskGroq(question string, context []Message) (string, []Message, error) {
 
@@ -60,6 +75,10 @@ func AskGroq(question string, context []Message) (string, []Message, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return "", context, errors.New(resp.Status)
+	}
+
 	var p GroqReponse
 	err = json.NewDecoder(resp.Body).Decode(&p)
 	if err != nil {
@@ -69,11 +88,22 @@ func AskGroq(question string, context []Message) (string, []Message, error) {
 	log.Printf("%+v\n", p)
 
 	if len(p.Choices) == 0 {
-		return "", context, http.ErrContentLength
+		return "", context, processError(resp)
 	}
 	result := p.Choices[len(p.Choices)-1].Message
 	context = append(context, result)
 	return result.Content, context, nil
+}
+
+func processError(resp *http.Response) error {
+	data, err := httputil.DumpResponse(resp, false)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%q", data)
+
+	return errors.New("no responses message in body")
 }
 
 type Message struct {

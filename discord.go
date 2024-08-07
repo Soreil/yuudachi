@@ -32,7 +32,7 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			msg, history, err := AskGroq(m.Content, ctx)
 
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Oopsie woopsie we got an error groq sisters")
+				s.ChannelMessageSend(m.ChannelID, "Oopsie woopsie we got an error groq sisters:"+err.Error())
 				log.Println(err)
 			}
 
@@ -128,15 +128,16 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 					var ctx = groqLUT[m.ReferencedMessage.ID]
 					return AskGroq(strings.Join(tokens[1:], " "), ctx)
 				} else {
-					return AskGroq(strings.Join(tokens[1:], " "), nil)
+					var x = AskGroqSystem("You are a discord bot which has to answer questions succinctly as to not flood the channel", nil)
+					return AskGroq(strings.Join(tokens[1:], " "), x)
 				}
 			}()
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Oopsie woopsie we got an error groq sisters")
+				s.ChannelMessageSend(m.ChannelID, "Oopsie woopsie we got an error groq sisters:"+err.Error())
 				log.Println(err)
 			}
 
-			var messages = chunk(msg, 1000)
+			var messages = chunk(msg, 2000)
 			for _, v := range messages {
 				msg, err := s.ChannelMessageSend(m.ChannelID, v)
 				if err != nil {
@@ -144,6 +145,23 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 				}
 				groqLUT[msg.ID] = history
 			}
+		case "groq-prompt":
+			role := strings.Join(tokens[1:], " ")
+
+			history := func() []Message {
+				if m.ReferencedMessage != nil {
+					var ctx = groqLUT[m.ReferencedMessage.ID]
+					return AskGroqSystem(role, ctx)
+				} else {
+					return AskGroqSystem(role, nil)
+				}
+			}()
+			msg, err := s.ChannelMessageSend(m.ChannelID, "My role is now:"+role)
+			if err != nil {
+				panic(err)
+			}
+			groqLUT[msg.ID] = history
+
 		default:
 		}
 	}
