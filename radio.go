@@ -5,11 +5,14 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"mvdan.cc/xurls/v2"
 )
 
 // Current song API response
@@ -125,13 +128,6 @@ func radioCurrent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	footer := new(discordgo.MessageEmbedFooter)
-	if !record.Main.Isafkstream {
-		footer.Text = "Current thread: " + record.Main.Thread
-	} else {
-		footer.Text = "Upcoming: " + record.Main.Queue[0].Meta
-	}
-
 	progress := (time.Duration(record.Main.Current-record.Main.StartTime) * time.Second).String() + " / " + (time.Duration(record.Main.EndTime-record.Main.StartTime) * time.Second).String()
 
 	fields := make([]*discordgo.MessageEmbedField, 2)
@@ -145,16 +141,81 @@ func radioCurrent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	fields[0].Value = progress
 	fields[0].Inline = false
 
-	embed := &discordgo.MessageEmbed{URL: frontpage,
-		Title:     "Now playing",
-		Color:     radioRed,
-		Footer:    footer,
-		Thumbnail: &discordgo.MessageEmbedThumbnail{URL: api + "/dj-image/" + record.Main.Dj.Djimage},
-		Fields:    fields,
+	if !record.Main.Isafkstream && !IsUrl(record.Main.Thread) && HasImage(record.Main.Thread) {
+
+		embed := &discordgo.MessageEmbed{URL: frontpage,
+			Title:     "Now playing",
+			Color:     radioRed,
+			Image:     GetImage(record.Main.Thread),
+			Thumbnail: &discordgo.MessageEmbedThumbnail{URL: api + "/dj-image/" + record.Main.Dj.Djimage},
+			Fields:    fields,
+		}
+		if _, err := s.ChannelMessageSendEmbed(m.ChannelID, embed); err != nil {
+			log.Println(err)
+		}
+
+	} else {
+		footer := new(discordgo.MessageEmbedFooter)
+		if !record.Main.Isafkstream {
+			footer.Text = "Current thread: " + record.Main.Thread
+		} else {
+			footer.Text = "Upcoming: " + record.Main.Queue[0].Meta
+		}
+
+		embed := &discordgo.MessageEmbed{URL: frontpage,
+			Title:     "Now playing",
+			Color:     radioRed,
+			Footer:    footer,
+			Thumbnail: &discordgo.MessageEmbedThumbnail{URL: api + "/dj-image/" + record.Main.Dj.Djimage},
+			Fields:    fields,
+		}
+		if _, err := s.ChannelMessageSendEmbed(m.ChannelID, embed); err != nil {
+			log.Println(err)
+		}
 	}
-	if _, err := s.ChannelMessageSendEmbed(m.ChannelID, embed); err != nil {
-		log.Println(err)
+
+}
+
+func GetImage(s string) *discordgo.MessageEmbedImage {
+	rxRelaxed := xurls.Relaxed()
+	res := rxRelaxed.FindString(s)
+
+	return &discordgo.MessageEmbedImage{
+		URL: res,
 	}
+}
+
+func HasImage(s string) bool {
+	rxRelaxed := xurls.Relaxed()
+	res := rxRelaxed.FindString(s)
+	if res == "" {
+		return false
+	}
+	ext, err := GetFileExtensionFromUrl(res)
+	if err != nil {
+		return false
+	}
+
+	things := []string{"gif", "jpg", "png", "webp", "jpeg"}
+	return slices.Contains(things, ext)
+
+}
+
+func GetFileExtensionFromUrl(rawUrl string) (string, error) {
+	u, err := url.Parse(rawUrl)
+	if err != nil {
+		return "", err
+	}
+	pos := strings.LastIndex(u.Path, ".")
+	if pos == -1 {
+		return "", errors.New("couldn't find a period to indicate a file extension")
+	}
+	return u.Path[pos+1 : len(u.Path)], nil
+}
+
+func IsUrl(s string) bool {
+	_, err := url.Parse(s)
+	return err != nil
 }
 
 // Songs is the API response of the current music queue
