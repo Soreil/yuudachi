@@ -12,6 +12,9 @@ import (
 
 const groqURL = "https://api.groq.com/openai/v1/chat/completions"
 
+var CurrentTemperature float64 = 0.6
+var CurrentReasoningFormat reasoningFormats = parsedReasoningFormat
+
 func AskGroqSystem(prompt string, context []Message) []Message {
 	if context == nil {
 		context = []Message{}
@@ -43,6 +46,8 @@ func AskGroq(question string, context []Message) (string, []Message, error) {
 	var groqRequest = GroqRequest{
 		context,
 		*groqModel,
+		CurrentTemperature,
+		CurrentReasoningFormat,
 	}
 
 	data, err := json.Marshal(groqRequest)
@@ -106,14 +111,24 @@ func processError(resp *http.Response) error {
 	return errors.New("no responses message in body")
 }
 
+type reasoningFormats string
+
+const (
+	rawReasoningFormat    reasoningFormats = "raw"
+	parsedReasoningFormat reasoningFormats = "parsed"
+	hiddenReasoningFormat reasoningFormats = "hidden"
+)
+
 type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 
 type GroqRequest struct {
-	Messages []Message `json:"messages"`
-	Model    string    `json:"model"`
+	Messages        []Message        `json:"messages"`
+	Model           string           `json:"model"`
+	Temperature     float64          `json:"temperature"`
+	ReasoningFormat reasoningFormats `json:"reasoning_format"`
 }
 
 type GroqReponse struct {

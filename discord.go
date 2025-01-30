@@ -10,6 +10,7 @@ import (
 )
 
 const prefix string = "!"
+const defaultPrompt string = `You are a discord bot which has to answer questions succinctly as to not flood the channel`
 
 var groqLUT map[string][]Message = map[string][]Message{}
 
@@ -128,8 +129,13 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 					var ctx = groqLUT[m.ReferencedMessage.ID]
 					return AskGroq(strings.Join(tokens[1:], " "), ctx)
 				} else {
-					var x = AskGroqSystem("You are a discord bot which has to answer questions succinctly as to not flood the channel", nil)
-					return AskGroq(strings.Join(tokens[1:], " "), x)
+					if usingDeepSeekR1 {
+						var message = defaultPrompt + "\n" + strings.Join(tokens[1:], " ")
+						return AskGroq(message, nil)
+					} else {
+						var x = AskGroqSystem(defaultPrompt, nil)
+						return AskGroq(strings.Join(tokens[1:], " "), x)
+					}
 				}
 			}()
 			if err != nil {

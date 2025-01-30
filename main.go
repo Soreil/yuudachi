@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	botID string
+	botID           string
+	usingDeepSeekR1 bool
 )
 
 var (
@@ -46,6 +47,8 @@ func main() {
 	log.Println("Got bot details")
 
 	botID = u.ID
+
+	usingDeepSeekR1 = *groqModel == `deepseek-r1-distill-llama-70b`
 
 	//here we add the functions
 	dg.AddHandler(personality)
