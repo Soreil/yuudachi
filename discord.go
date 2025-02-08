@@ -10,7 +10,7 @@ import (
 )
 
 const prefix string = "!"
-const defaultPrompt string = `You are a discord bot which has to answer questions succinctly as to not flood the channel`
+const defaultPrompt string = `Be succinct\n`
 
 var groqLUT map[string][]Message = map[string][]Message{}
 
@@ -123,18 +123,21 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "clap", "👏", "c":
 			clap(s, m, tokens[1:])
 		case "groq":
-
+			body := strings.Join(tokens[1:], " ")
+			if body == "" {
+				return
+			}
 			msg, history, err := func() (string, []Message, error) {
 				if m.ReferencedMessage != nil {
 					var ctx = groqLUT[m.ReferencedMessage.ID]
-					return AskGroq(strings.Join(tokens[1:], " "), ctx)
+					return AskGroq(body, ctx)
 				} else {
 					if usingDeepSeekR1 {
-						var message = defaultPrompt + "\n" + strings.Join(tokens[1:], " ")
+						var message = defaultPrompt + body
 						return AskGroq(message, nil)
 					} else {
 						var x = AskGroqSystem(defaultPrompt, nil)
-						return AskGroq(strings.Join(tokens[1:], " "), x)
+						return AskGroq(body, x)
 					}
 				}
 			}()
