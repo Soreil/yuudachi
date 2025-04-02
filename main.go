@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/soreil/yuudachi/groq"
 	"github.com/vharitonsky/iniflags"
 )
 
@@ -25,7 +26,10 @@ var (
 )
 
 func main() {
+
 	iniflags.Parse()
+	groq.GroqKey = groqKey
+	groq.GroqModel = groqModel
 
 	if *printVersion {
 		fmt.Println(appVersion)

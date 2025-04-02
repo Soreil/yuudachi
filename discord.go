@@ -7,12 +7,14 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/soreil/yuudachi/groq"
 )
 
 const prefix string = "!"
 const defaultPrompt string = `Be succinct\n`
 
-var groqLUT map[string][]Message = map[string][]Message{}
+var groqLUT map[string][]groq.Message = map[string][]groq.Message{}
+var messageModel map[string]groq.ReasoningFormats = map[string]groq.ReasoningFormats{}
 
 func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
@@ -29,21 +31,46 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.ReferencedMessage != nil {
 		ctx, contains := groqLUT[m.ReferencedMessage.ID]
+		msgModel := messageModel[m.ReferencedMessage.ID]
+
 		if contains {
-			msg, history, err := AskGroq(m.Content, ctx)
+			msg, history, err := groq.AskGroq(m.Content, ctx, msgModel)
 
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, "Oopsie woopsie we got an error groq sisters:"+err.Error())
 				log.Println(err)
 			}
 
-			var messages = chunk(msg, 1000)
-			for _, v := range messages {
-				msg, err := s.ChannelMessageSend(m.ChannelID, v)
-				if err != nil {
-					panic(err)
+			if msgModel == groq.RawReasoningFormat {
+				thinkclosetag := `</think>`
+				idx := strings.Index(msg, `</think>`)
+				thinkingBlock := msg[7:idx]
+				bodyStart := idx + len(thinkclosetag)
+				body := strings.TrimSpace(msg[bodyStart:])
+				reader := strings.NewReader(strings.TrimSpace(thinkingBlock))
+
+				var files []*discordgo.File = make([]*discordgo.File, 1)
+				files[0] = &discordgo.File{Name: "thinking.txt", ContentType: "text/html", Reader: reader}
+
+				var messages = chunk(body, 1000)
+				for _, v := range messages {
+					msg, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{Content: v, Files: files})
+
+					if err != nil {
+						panic(err)
+					}
+					groqLUT[msg.ID] = history
 				}
-				groqLUT[msg.ID] = history
+			} else {
+				var messages = chunk(msg, 2000)
+				for _, v := range messages {
+					msg, err := s.ChannelMessageSend(m.ChannelID, v)
+
+					if err != nil {
+						panic(err)
+					}
+					groqLUT[msg.ID] = history
+				}
 			}
 			return
 		}
@@ -122,22 +149,68 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 			birds(s, m)
 		case "clap", "👏", "c":
 			clap(s, m, tokens[1:])
+		case "reason":
+			if !usingDeepSeekR1 {
+				break
+			}
+			body := strings.Join(tokens[1:], " ")
+			if body == "" {
+				return
+			}
+			msg, history, err := func() (string, []groq.Message, error) {
+				if m.ReferencedMessage != nil {
+					var ctx = groqLUT[m.ReferencedMessage.ID]
+					return groq.AskGroq(body, ctx, groq.RawReasoningFormat)
+				} else {
+					if usingDeepSeekR1 {
+						var message = defaultPrompt + body
+						return groq.AskGroq(message, nil, groq.RawReasoningFormat)
+					}
+				}
+				panic("eek")
+			}()
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Oopsie woopsie we got an error groq sisters:"+err.Error())
+				log.Println(err)
+			}
+
+			thinkclosetag := `</think>`
+			idx := strings.Index(msg, `</think>`)
+			thinkingBlock := msg[7:idx]
+			bodyStart := idx + len(thinkclosetag)
+			responsebody := strings.TrimSpace(msg[bodyStart:])
+			reader := strings.NewReader(strings.TrimSpace(thinkingBlock))
+
+			var files []*discordgo.File = make([]*discordgo.File, 1)
+			files[0] = &discordgo.File{Name: "thinking.txt", ContentType: "text/html", Reader: reader}
+
+			var messages = chunk(responsebody, 2000)
+			for _, v := range messages {
+				msg, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{Content: v, Files: files})
+
+				if err != nil {
+					panic(err)
+				}
+				groqLUT[msg.ID] = history
+				messageModel[msg.ID] = groq.RawReasoningFormat
+			}
+
 		case "groq":
 			body := strings.Join(tokens[1:], " ")
 			if body == "" {
 				return
 			}
-			msg, history, err := func() (string, []Message, error) {
+			msg, history, err := func() (string, []groq.Message, error) {
 				if m.ReferencedMessage != nil {
 					var ctx = groqLUT[m.ReferencedMessage.ID]
-					return AskGroq(body, ctx)
+					return groq.AskGroq(body, ctx, groq.HiddenReasoningFormat)
 				} else {
 					if usingDeepSeekR1 {
 						var message = defaultPrompt + body
-						return AskGroq(message, nil)
+						return groq.AskGroq(message, nil, groq.HiddenReasoningFormat)
 					} else {
-						var x = AskGroqSystem(defaultPrompt, nil)
-						return AskGroq(body, x)
+						var x = groq.AskGroqSystem(defaultPrompt, nil)
+						return groq.AskGroq(body, x, groq.HiddenReasoningFormat)
 					}
 				}
 			}()
@@ -153,16 +226,17 @@ func command(s *discordgo.Session, m *discordgo.MessageCreate) {
 					panic(err)
 				}
 				groqLUT[msg.ID] = history
+				messageModel[msg.ID] = groq.HiddenReasoningFormat
 			}
 		case "groq-prompt":
 			role := strings.Join(tokens[1:], " ")
 
-			history := func() []Message {
+			history := func() []groq.Message {
 				if m.ReferencedMessage != nil {
 					var ctx = groqLUT[m.ReferencedMessage.ID]
-					return AskGroqSystem(role, ctx)
+					return groq.AskGroqSystem(role, ctx)
 				} else {
-					return AskGroqSystem(role, nil)
+					return groq.AskGroqSystem(role, nil)
 				}
 			}()
 			msg, err := s.ChannelMessageSend(m.ChannelID, "My role is now:"+role)

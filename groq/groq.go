@@ -1,4 +1,4 @@
-package main
+package groq
 
 import (
 	"bytes"
@@ -10,10 +10,12 @@ import (
 	"net/http/httputil"
 )
 
+var GroqKey *string
+var GroqModel *string
+
 const groqURL = "https://api.groq.com/openai/v1/chat/completions"
 
 var CurrentTemperature float64 = 0.6
-var CurrentReasoningFormat reasoningFormats = parsedReasoningFormat
 
 func AskGroqSystem(prompt string, context []Message) []Message {
 	if context == nil {
@@ -28,10 +30,10 @@ func AskGroqSystem(prompt string, context []Message) []Message {
 	return context
 }
 
-func AskGroq(question string, context []Message) (string, []Message, error) {
+func AskGroq(question string, context []Message, reasoningFormat ReasoningFormats) (string, []Message, error) {
 
 	// Create a Bearer string by appending string access token
-	var bearer = "Bearer " + *groqKey
+	var bearer = "Bearer " + *GroqKey
 
 	if context == nil {
 		context = []Message{}
@@ -45,9 +47,9 @@ func AskGroq(question string, context []Message) (string, []Message, error) {
 
 	var groqRequest = GroqRequest{
 		context,
-		*groqModel,
+		*GroqModel,
 		CurrentTemperature,
-		CurrentReasoningFormat,
+		reasoningFormat,
 	}
 
 	data, err := json.Marshal(groqRequest)
@@ -111,12 +113,12 @@ func processError(resp *http.Response) error {
 	return errors.New("no responses message in body")
 }
 
-type reasoningFormats string
+type ReasoningFormats string
 
 const (
-	rawReasoningFormat    reasoningFormats = "raw"
-	parsedReasoningFormat reasoningFormats = "parsed"
-	hiddenReasoningFormat reasoningFormats = "hidden"
+	RawReasoningFormat    ReasoningFormats = "raw"
+	ParsedReasoningFormat ReasoningFormats = "parsed"
+	HiddenReasoningFormat ReasoningFormats = "hidden"
 )
 
 type Message struct {
@@ -128,7 +130,7 @@ type GroqRequest struct {
 	Messages        []Message        `json:"messages"`
 	Model           string           `json:"model"`
 	Temperature     float64          `json:"temperature"`
-	ReasoningFormat reasoningFormats `json:"reasoning_format"`
+	ReasoningFormat ReasoningFormats `json:"reasoning_format"`
 }
 
 type GroqReponse struct {
